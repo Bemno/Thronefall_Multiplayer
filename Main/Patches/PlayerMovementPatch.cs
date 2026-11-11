@@ -41,6 +41,18 @@ static class PlayerMovementPatch
 		{
 			t.Field<float>("targetOrthSize").Value = zoomLevels[0];
 		}
+		// v2.13: SetCameraShadows (every frame) and OnDestroy need these from vanilla Start.
+		var urp = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+		t.Field<UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset>("urpSettings").Value = urp;
+		if (urp != null)
+		{
+			t.Field<float>("defaultShadowDist").Value = urp.shadowDistance;
+		}
+		var cameras = t.Field<System.Collections.Generic.List<Camera>>("cameras").Value;
+		if (cameras != null && cameras.Count > 0)
+		{
+			t.Field<Vector3>("mainCamLocalPos").Value = cameras[0].transform.localPosition;
+		}
 	}
 
 	private static void Awake(On.PlayerMovement.orig_Awake original, PlayerMovement self)

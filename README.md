@@ -1,4 +1,56 @@
-# Thronefall Multiplayer (community-updated fork)
+# Thronefall Multiplayer (updated for Thronefall v2.13)
+
+Co-op multiplayer for Thronefall over Steam lobbies, kept working on the current game version.
+
+This continues a chain of community forks. All credit for the mod itself goes to
+**Rikhardur Bjarni Einarsson (BadWolf)**, author of the original
+[MunWolf/thronefall_multiplayer](https://github.com/MunWolf/thronefall_multiplayer), who invited anyone to
+fork and release their own version as long as they give credit. The previous fork,
+[Bwarhness/thronefall_multiplayer](https://github.com/Bwarhness/thronefall_multiplayer) (released on Thunderstore as
+ThronefallMultiplayerContinued 1.2.2), stopped working with Thronefall v2.13. Its full history is kept in this repository.
+
+## Changes since 1.2.2
+
+**Fixes for Thronefall v2.13**
+- `UnitRespawnerForBuildings.RespawnAKnockedOutUnit` now returns `int`; the hook was rebuilt so the plugin loads again.
+- New references (`PackageTools`, `Drawing`, URP runtime) required by the updated pathfinding and camera code.
+- `CameraRig.Start` replacement now sets the URP shadow fields, removing a per-frame NullReferenceException.
+- The main menu became a campaign carousel; the Multiplayer button is now found by name instead of a fixed path.
+- Null guards for a remote player's manual attack and for destroyed players at dawn.
+
+**New**
+- Online matches use their own save files (`mp_<level>.json`), so multiplayer never loads or overwrites your singleplayer runs.
+- The host's save is sent to clients when a level starts and at every dawn, so everyone continues the same match.
+- In-lobby updater: if your build differs from the host's and the host is a Steam friend, you can download the
+  host's DLL directly (SHA256-checked) and restart.
+- Recent partners: people you played with are remembered, and you are told when one of them is hosting, even when
+  Steam shows them as Invisible.
+- Hosting copies a `steam://joinlobby/...` link to the clipboard, a fallback when the lobby list does not show the game.
+
+## Install
+
+Easiest: run `Thronefall-Multiplayer-Installer.exe` from the [Releases](../../releases) page. It finds Thronefall via
+Steam, closes the game and installs BepInEx plus the mod. The exe is unsigned, so Windows SmartScreen will warn
+("More info" -> "Run anyway").
+
+Manual: install [BepInExPack_Thronefall](https://thunderstore.io/c/thronefall/p/BepInEx/BepInExPack_Thronefall/), then
+put `com.badwolf.thronefall_mp.dll` in `BepInEx/plugins/ThronefallMultiplayer/`.
+
+All players must run the same build.
+
+## Building
+
+Copy the game DLLs listed in `setup.ps1` (plus `PackageTools`, `Drawing`, `Unity.RenderPipelines.Universal.Runtime`,
+`Unity.RenderPipelines.Core.Runtime`) from `Thronefall_Data/Managed` into `lib/`, and `BepInEx/plugins/MMHOOK/MMHOOK_Assembly-CSharp.dll`
+from a game folder where BepInEx has run once. Then `dotnet build Main/ThronefallMP.csproj -c Release`.
+The game's own DLLs are not part of this repository.
+
+`installer/build-installer.ps1 -Game <Thronefall folder>` packs BepInEx from that game folder and the built DLL into
+`dist/Thronefall-Multiplayer-Installer.exe` (uses IExpress, built into Windows).
+
+---
+
+## Previous README (Bwarhness fork)
 
 > **This is a community fork of [MunWolf/thronefall_multiplayer](https://github.com/MunWolf/thronefall_multiplayer) by Rikhardur Bjarni Einarsson (BadWolf).**
 > All credit for the mod itself goes to BadWolf. The original repository was archived in February 2024, and BadWolf

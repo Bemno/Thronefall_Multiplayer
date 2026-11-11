@@ -657,6 +657,11 @@ public class Network : MonoBehaviour
         }
 
         var id = new CSteamID(entered.m_ulSteamIDLobby);
+        if (Plugin.Instance.Updater.HandleVersionMismatch(id))
+        {
+            return;
+        }
+
         if (SteamMatchmaking.GetLobbyData(id, "password") == "yes" && _password == null)
         {
             UIManager.LobbyListPanel.ShowHideConnectingDialog(false);

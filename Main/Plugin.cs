@@ -26,6 +26,8 @@ namespace ThronefallMP
         public static ManualLogSource Log { get; private set; }
         
         public Network.Network Network { get; private set; }
+        public Network.ModUpdater Updater { get; private set; }
+        public Network.RecentPartners Partners { get; private set; }
         public Network.PlayerManager PlayerManager { get; private set; }
         public TextureRepository TextureRepository { get; private set; }
         [UsedImplicitly] public CheatHandler CheatHandler { get; private set; }
@@ -48,6 +50,9 @@ namespace ThronefallMP
             Instance = this;
             TextureRepository = new TextureRepository();
             Network = Instance.gameObject.AddComponent<Network.Network>();
+            Updater = Instance.gameObject.AddComponent<Network.ModUpdater>();
+            Partners = Instance.gameObject.AddComponent<Network.RecentPartners>();
+            gameObject.AddComponent<Network.SaveSync>();
             gameObject.AddComponent<Components.LoadoutWatcher>();
             PlayerManager = new Network.PlayerManager();
             CheatHandler = new CheatHandler();

@@ -149,6 +149,7 @@ public class LevelDataSync : BaseSync
             To = packet.To,
             From = packet.From
         };
+        SaveSync.SendSave(packet.To);
         Equip.ClearEquipments();
         foreach (var perk in packet.Perks)
         {

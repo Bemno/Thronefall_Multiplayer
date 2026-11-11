@@ -36,6 +36,27 @@ public static class UIManager
     private static GameObject _canvas;
     private static GameObject _container;
     
+    private static ThronefallUIElement FindMenuButton(Transform root, string name)
+    {
+        foreach (var element in root.GetComponentsInChildren<ThronefallUIElement>(true))
+        {
+            if (element.name.IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return element;
+            }
+        }
+        foreach (var t in root.GetComponentsInChildren<Transform>(true))
+        {
+            if (t.name.IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                var element = t.GetComponentInChildren<ThronefallUIElement>(true) ?? t.GetComponentInParent<ThronefallUIElement>();
+                if (element != null) return element;
+            }
+        }
+        Plugin.Log.LogWarning($"Main menu button '{name}' not found");
+        return null;
+    }
+
     public static void Initialize()
     {
         if (_initialized)
@@ -58,9 +79,11 @@ public static class UIManager
         containerTransform.offsetMax = new Vector2(0, 0);
         
         TitleScreen = GameObject.Find("UI Canvas/Title Frame").gameObject;
-        var play = TitleScreen.transform.Find("Menu Items/Play").GetComponent<ThronefallUIElement>();
-        var settings = TitleScreen.transform.Find("Menu Items/Settings").GetComponent<ThronefallUIElement>();
-        DefaultFont = settings.GetComponent<TextMeshProUGUI>().font;
+        // v2.13 moved the buttons from "Menu Items" into a per-campaign carousel page.
+        var menuItems = TitleScreen.transform.Find("Menu Items") ?? TitleScreen.transform.Find("Menu Root/Menu_0_Thronefall/Menu");
+        var play = FindMenuButton(menuItems, "Play");
+        var settings = FindMenuButton(menuItems, "Settings");
+        DefaultFont = settings.GetComponentInChildren<TextMeshProUGUI>(true).font;
 
         LobbyListPanel = BaseUI.Create<LobbyListPanel>(_canvas, _container);
         HostPanel = BaseUI.Create<HostPanel>(_canvas, _container);
@@ -73,10 +96,13 @@ public static class UIManager
         var multiplayer = Helpers.InstantiateDisabled(settings.gameObject, settings.transform.parent);
         multiplayer.name = "Multiplayer";
         multiplayer.transform.SetSiblingIndex(1);
-        Object.DestroyImmediate(multiplayer.GetComponent<Localize>());
-        var textMesh = multiplayer.GetComponent<TextMeshProUGUI>();
+        foreach (var localize in multiplayer.GetComponentsInChildren<Localize>(true))
+        {
+            Object.DestroyImmediate(localize);
+        }
+        var textMesh = multiplayer.GetComponentInChildren<TextMeshProUGUI>(true);
         textMesh.text = "Multiplayer";
-        var button = multiplayer.GetComponent<TFUITextButton>();
+        var button = multiplayer.GetComponentInChildren<TFUITextButton>(true);
         // game/Unity update made UnityEventBase.m_PersistentCalls inaccessible to external asms; clear the
         // inspector-wired persistent listeners via reflection (PersistentCallGroup.Clear()).
         Traverse.Create(button.onSelectionStateChange).Field("m_PersistentCalls").Method("Clear").GetValue();

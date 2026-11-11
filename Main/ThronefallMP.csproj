@@ -1,10 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>com.badwolf.thronefall_mp</AssemblyName>
     <Description>Multiplayer mod for Thronefall</Description>
-    <Version>1.2.2</Version>
+    <Version>1.2.4</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <PackageId>Thronefall Multiplayer</PackageId>
@@ -50,6 +50,18 @@
     <Reference Include="MoreMountains.Feedbacks">
       <HintPath>..\lib\MoreMountains.Feedbacks.dll</HintPath>
     </Reference>
+    <Reference Include="PackageTools">
+      <HintPath>..\lib\PackageTools.dll</HintPath>
+    </Reference>
+    <Reference Include="Drawing">
+      <HintPath>..\lib\Drawing.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.Runtime">
+      <HintPath>..\lib\Unity.RenderPipelines.Universal.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Runtime">
+      <HintPath>..\lib\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
+    </Reference>
     <Reference Include="MPUIKit">
       <HintPath>..\lib\MPUIKit.dll</HintPath>
     </Reference>
@@ -75,8 +87,10 @@
     <None Remove="Assets\blank.png" />
     <EmbeddedResource Include="Assets\blank.png" />
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="powershell.exe -NonInteractive -executionpolicy Unrestricted -file $(SolutionDir)\install.ps1 $(SolutionDir) $(OutDir)&#xA;powershell.exe -NonInteractive -executionpolicy Unrestricted -file $(SolutionDir)\package.ps1 $(SolutionDir) $(OutDir) $(ConfigurationName)" />
-  </Target>
 </Project>
+
+
+
+
+
+

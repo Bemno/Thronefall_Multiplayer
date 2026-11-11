@@ -76,6 +76,7 @@ public partial class LobbyListPanel : BaseUI
                     SteamMatchmaking.RequestLobbyData(friendGameInfo.m_steamIDLobby);
                 }
             }
+            RequestPartnerLobbies();
             _scrollRect.verticalNormalizedPosition = 1.0f;
         }
         else
@@ -132,8 +133,17 @@ public partial class LobbyListPanel : BaseUI
         _back.NavRight = Host.Button;
     }
     
+    private static void RequestPartnerLobbies()
+    {
+        foreach (var lobby in Plugin.Instance.Partners.KnownLobbies)
+        {
+            SteamMatchmaking.RequestLobbyData(lobby);
+        }
+    }
+
     public void Open()
     {
+        Plugin.Instance.Partners.AskAll();
         Enabled = true;
         RefreshLobbies();
         Host.Button.Select();
@@ -193,9 +203,8 @@ public partial class LobbyListPanel : BaseUI
         for (var i = 0; i < list.m_nLobbiesMatching; ++i)
         {
             var lobby = SteamMatchmaking.GetLobbyByIndex(i);
-            if (SteamMatchmaking.GetLobbyData(lobby, "version") != Plugin.VersionString)
+            if (string.IsNullOrEmpty(SteamMatchmaking.GetLobbyData(lobby, "version")))
             {
-                // TODO: Maybe display these but don't allow them to be selected.
                 continue;
             }
             
@@ -209,7 +218,8 @@ public partial class LobbyListPanel : BaseUI
                 HasPassword = SteamMatchmaking.GetLobbyData(lobby, "password") == "yes",
             });
         }
-        
+
+        RequestPartnerLobbies();
         _scrollRect.verticalNormalizedPosition = 0.0f;
     }
 
@@ -233,9 +243,8 @@ public partial class LobbyListPanel : BaseUI
         var id = new CSteamID(data.m_ulSteamIDLobby);
         if (!_idToLobbies.TryGetValue(id, out var lobby))
         {
-            if (SteamMatchmaking.GetLobbyData(id, "version") != Plugin.VersionString)
+            if (string.IsNullOrEmpty(SteamMatchmaking.GetLobbyData(id, "version")))
             {
-                // TODO: Maybe display these but don't allow them to be selected.
                 return;
             }
             

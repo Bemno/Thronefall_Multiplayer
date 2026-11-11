@@ -28,7 +28,7 @@ public static class BuildingInteractorPatch
     private static void OnDawn_AfterSunrise(On.BuildingInteractor.orig_OnDawn_AfterSunrise original, BuildingInteractor self)
     {
         var incomeModifiers = Traverse.Create(self).Field<List<IncomeModifyer>>("incomeModifiers");
-        var players = Plugin.Instance.PlayerManager.GetAllPlayerData().Select(x => x.GetComponent<PlayerInteraction>()).ToArray();
+        var players = Plugin.Instance.PlayerManager.GetAllPlayerData().Where(x => x != null).Select(x => x.GetComponent<PlayerInteraction>()).ToArray();
         var closest = Helpers.FindClosest(players, self.transform.position);
         self.Harvest(closest);
         foreach (var modifier in incomeModifiers.Value)

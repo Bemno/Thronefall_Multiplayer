@@ -629,6 +629,11 @@ public static class PacketHandler
         }
         
         var attack = player.GetComponent<PlayerInteraction>().ManualAttack;
+        if (attack == null)
+        {
+            Plugin.Log.LogWarning($"ManualAttack missing on player {packet.Player}, ability not replayed");
+            return;
+        }
         attack.TryToAttack();
     }
 

@@ -11,13 +11,13 @@ public class UnitRespawnerForBuildingsPatch
         On.UnitRespawnerForBuildings.RespawnAKnockedOutUnit += RespawnAKnockedOutUnit;
     }
 
-    private static void RespawnAKnockedOutUnit(On.UnitRespawnerForBuildings.orig_RespawnAKnockedOutUnit original, UnitRespawnerForBuildings self)
+    private static int RespawnAKnockedOutUnit(On.UnitRespawnerForBuildings.orig_RespawnAKnockedOutUnit original, UnitRespawnerForBuildings self)
     {
         if (!Plugin.Instance.Network.Server)
         {
-            return;
+            return 0;
         }
 
-        original(self);
+        return original(self);
     }
 }

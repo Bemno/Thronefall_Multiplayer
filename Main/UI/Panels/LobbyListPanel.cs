@@ -24,6 +24,7 @@ public partial class LobbyListPanel : BaseUI
     private ToggleControl _showWithPassword;
     private ToggleControl _showFull;
     private ButtonControl _connect;
+    private ButtonControl _directConnect;
     private ButtonControl _back;
     private CustomScrollRect _scrollRect;
     private bool _muteSound;
@@ -112,7 +113,7 @@ public partial class LobbyListPanel : BaseUI
         image2.color = UIManager.SelectedTransparentBackgroundColor;
 
         _connect.SetInteractable(true);
-        Host.Button.navigation = Host.Button.navigation with { selectOnLeft = _connect.Button };
+        _directConnect.Button.navigation = _directConnect.Button.navigation with { selectOnLeft = _connect.Button };
         _back.Button.navigation = _back.Button.navigation with { selectOnRight = _connect.Button };
     }
 
@@ -129,8 +130,8 @@ public partial class LobbyListPanel : BaseUI
         _currentlySelectedLobby = null;
         
         _connect.SetInteractable(false);
-        Host.NavLeft = _back.Button;
-        _back.NavRight = Host.Button;
+        _directConnect.NavLeft = _back.Button;
+        _back.NavRight = _directConnect.Button;
     }
     
     private static void RequestPartnerLobbies()
@@ -169,6 +170,12 @@ public partial class LobbyListPanel : BaseUI
         {
             UIManager.ExitHandled = true;
             Back();
+        }
+
+        if (!UIManager.HostPanel.Enabled && _activeConnectionDialog == null && Input.GetKeyDown(KeyCode.V)
+            && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)))
+        {
+            DirectConnect();
         }
         
         _timer += Time.deltaTime;
@@ -263,8 +270,8 @@ public partial class LobbyListPanel : BaseUI
             {
                 _currentlySelectedLobby = null;
                 _connect.SetInteractable(false);
-                Host.NavLeft = _back.Button;
-                _back.NavRight = Host.Button;
+                _directConnect.NavLeft = _back.Button;
+                _back.NavRight = _directConnect.Button;
             }
             
             Destroy(lobby.gameObject);

@@ -268,9 +268,7 @@ public class HostPanel : BaseUI
         // TODO: Add an option in the UI for this.
         SteamMatchmaking.SetLobbyData(id, "cheats_enabled", _currentRequest.Value.CheatsEnabled ? "yes" : "no");
         Plugin.Log.LogInfo($"Lobby {created.m_ulSteamIDLobby} created with name '{_currentRequest.Value.Name}' password '{hasPassword}'");
-        // Lobby search and friends' game info both fail when players are Invisible on Steam; a joinlobby
-        // link pasted into Win+R reaches the running game as GameLobbyJoinRequested instead.
-        var joinLink = $"steam://joinlobby/{SteamUtils.GetAppID()}/{created.m_ulSteamIDLobby}/{SteamUser.GetSteamID().m_SteamID}";
+        var joinLink = Network.Network.InviteLink(id);
         GUIUtility.systemCopyBuffer = joinLink;
         Plugin.Log.LogInfo($"Join link (copied to clipboard): {joinLink}");
         Plugin.CallbackOnLoad("_LevelSelect", false, () =>

@@ -13,6 +13,7 @@ public class GameStatusPanel : BaseUI
     public override string Name => "Game Status Panel";
 
     private GameObject _playerList;
+    private ButtonControl _copyInvite;
     
     public override void ConstructPanelContent()
     {
@@ -94,6 +95,30 @@ public class GameStatusPanel : BaseUI
         Plugin.Instance.PlayerManager.OnPlayerAdded += CreatePlayerLine;
         LayoutRebuilder.ForceRebuildLayoutImmediate(_playerList.GetComponent<RectTransform>());
         _playerList.SetActive(false);
+
+        _copyInvite = UIHelper.CreateButton(container, "copy_invite", "Copy Invite");
+        _copyInvite.Normal.Size = 24;
+        _copyInvite.Hover.Size = 28;
+        _copyInvite.NormalSelected.Size = 28;
+        _copyInvite.HoverSelected.Size = 28;
+        _copyInvite.Noninteractive.Size = 24;
+        _copyInvite.Reset();
+        UIHelper.SetLayoutElement(_copyInvite.gameObject, minHeight: 40);
+        _copyInvite.OnClick += CopyInvite;
+        _copyInvite.gameObject.SetActive(false);
+    }
+
+    private static void CopyInvite()
+    {
+        var network = Plugin.Instance.Network;
+        if (!network.Online || !network.Lobby.IsValid())
+        {
+            return;
+        }
+
+        GUIUtility.systemCopyBuffer = Network.Network.InviteLink(network.Lobby);
+        UIManager.CreateMessageDialog("Invite copied", "The invite link is on your clipboard. Send it to a friend: they press Direct Connect (or Ctrl+V) in the Multiplayer menu, or paste it into Win+R while the game is running.");
+        ThronefallAudioManager.Oneshot(ThronefallAudioManager.AudioOneShot.ButtonApply);
     }
 
     private void Update()
@@ -101,6 +126,7 @@ public class GameStatusPanel : BaseUI
         if (Plugin.Instance.Network.Online && Input.GetKeyDown(KeyCode.BackQuote))
         {
             _playerList.SetActive(!_playerList.activeSelf);
+            _copyInvite.gameObject.SetActive(_playerList.activeSelf);
             Plugin.Log.LogInfo($"List toggled {_playerList.activeSelf}");
         }
     }

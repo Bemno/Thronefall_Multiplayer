@@ -1,4 +1,5 @@
-﻿using ThronefallMP.Network;
+﻿using Steamworks;
+using ThronefallMP.Network;
 using ThronefallMP.UI.Controls;
 using TMPro;
 using UnityEngine;
@@ -191,6 +192,12 @@ public partial class LobbyListPanel
         UIHelper.SetLayoutElement(_connect.gameObject, minWidth: 160, preferredWidth: 300);
         _connect.SetInteractable(false);
 
+        _directConnect = UIHelper.CreateButton(buttons, "direct_connect", "Direct Connect");
+        _directConnect.OnClick += DirectConnect;
+        _directConnect.OnExit += () => { _muteSound = false; };
+        _directConnect.OnSelected += PlaySelectSound;
+        UIHelper.SetLayoutElement(_directConnect.gameObject, minWidth: 160, preferredWidth: 300);
+
         Host = UIHelper.CreateButton(buttons, "host", "Host");
         Host.OnClick += () =>
         {
@@ -210,23 +217,41 @@ public partial class LobbyListPanel
 
         // Navigation
         _connect.NavLeft = _back.Button;
-        _connect.NavRight = Host.Button;
-        Host.NavLeft = _back.Button;
+        _connect.NavRight = _directConnect.Button;
+        _directConnect.NavLeft = _back.Button;
+        _directConnect.NavRight = Host.Button;
+        Host.NavLeft = _directConnect.Button;
         Host.NavRight = _back.Button;
         _back.NavLeft = Host.Button;
-        _back.NavRight = Host.Button;
+        _back.NavRight = _directConnect.Button;
     }
 
     private void ConnectToLobby(string password)
     {
+        ConnectToLobby(_currentlySelectedLobby.LobbyInfo.Id, _currentlySelectedLobby.LobbyInfo.Name, password);
+    }
+
+    private void DirectConnect()
+    {
+        if (!Network.Network.TryParseInvite(GUIUtility.systemCopyBuffer, out var lobby))
+        {
+            UIManager.CreateMessageDialog(
+                "Direct Connect",
+                "No invite on the clipboard. Ask the host to press Copy Invite, copy the steam://joinlobby/... link they send you, then press Direct Connect or Ctrl+V here."
+            );
+            return;
+        }
+
+        ConnectToLobby(lobby, "the invited lobby", null);
+    }
+
+    private void ConnectToLobby(CSteamID lobby, string name, string password)
+    {
         // TODO: Add callbacks to this function for status of request.
-        Plugin.Instance.Network.ConnectLobby(
-            _currentlySelectedLobby.LobbyInfo.Id,
-            password
-        );
+        Plugin.Instance.Network.ConnectLobby(lobby, password);
         _activeConnectionDialog = UIManager.CreateMessageDialog(
             "Connecting",
-            $"Connecting to {_currentlySelectedLobby.LobbyInfo.Name} please wait...",
+            $"Connecting to {name} please wait...",
             "Cancel",
             onClick: () =>
             {

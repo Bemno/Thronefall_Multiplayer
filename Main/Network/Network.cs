@@ -62,6 +62,40 @@ public class Network : MonoBehaviour
     public CSteamID Lobby { get; private set; }
     public static CSteamID SteamId => SteamUser.GetSteamID();
 
+    // A joinlobby link pasted into Win+R reaches a running game as GameLobbyJoinRequested, which also
+    // works when lobby search and friends' game info fail (players set to Invisible on Steam).
+    public static string InviteLink(CSteamID lobby) =>
+        $"steam://joinlobby/{SteamUtils.GetAppID()}/{lobby.m_SteamID}/{SteamMatchmaking.GetLobbyOwner(lobby).m_SteamID}";
+
+    public static bool TryParseInvite(string text, out CSteamID lobby)
+    {
+        lobby = CSteamID.Nil;
+        if (string.IsNullOrEmpty(text))
+        {
+            return false;
+        }
+
+        text = text.Trim();
+        const string prefix = "steam://joinlobby/";
+        if (text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            var parts = text.Substring(prefix.Length).Split('/');
+            if (parts.Length < 2)
+            {
+                return false;
+            }
+            text = parts[1];
+        }
+
+        if (!ulong.TryParse(text, out var id))
+        {
+            return false;
+        }
+
+        lobby = new CSteamID(id);
+        return lobby.IsLobby();
+    }
+
     private string _password;
     private byte[] _chatBuffer = new byte[4096];
     

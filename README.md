@@ -9,6 +9,9 @@ fork and release their own version as long as they give credit. The previous for
 [Bwarhness/thronefall_multiplayer](https://github.com/Bwarhness/thronefall_multiplayer) (released on Thunderstore as
 ThronefallMultiplayerContinued 1.2.2), stopped working with Thronefall v2.13. Its full history is kept in this repository.
 
+This fork was developed with the help of Claude (Anthropic), an AI assistant, which wrote much of the code
+and documentation under human direction and in-game testing.
+
 ## Changes since 1.2.2 (now 1.2.6)
 
 **Fixes for Thronefall v2.13**

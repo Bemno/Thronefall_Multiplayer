@@ -85,15 +85,6 @@ This fork recompiles the original source against the current game and adapts eve
   `CommandUnits.commanderUnitMoveSpeedMulti`**, **`SettingsManager.UseLargeInGameUI`** removed,
   **`UnityEvent.m_PersistentCalls`** accessed via reflection, **`Lerp.Interpolate` → `Mathf.Lerp`**.
 
-### Install (players)
-
-1. Install [BepInEx 5 for Thronefall](https://thunderstore.io/c/thronefall/p/BepInEx/BepInExPack_Thronefall/)
-   (e.g. via Thunderstore Mod Manager / r2modman, same as the original mod).
-2. Download `com.badwolf.thronefall_mp.dll` from this repo's [Releases](../../releases).
-3. Drop it into `BepInEx/plugins/` (replacing the old one if present) and launch the game.
-
-> All players in a session must use the **same** build (the mod performs a version check on connect).
-
 ---
 
 ## Original README
@@ -108,8 +99,3 @@ This is written in CSharp so you will have to acquire an IDE that can read .sln 
 You will also need an installation of Thronefall, run the setup.ps1 script to acquire all required dlls from your installation.
 After that open the solution file and run the build.
 
-### How to Run
-
-Download BepInEx 6 and copy it into your Thronefall directory.
-When you run the build it copies the ThronefallMultiplayer dlls to the correct plugin folder.
-Run your executable either directly or through Steam.

@@ -12,6 +12,7 @@
     <Authors>Rikhardur Bjarni Einarsson (BadWolf)</Authors>
     <Copyright>All rights reserved</Copyright>
     <Nullable>disable</Nullable>
+    <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..'))=/thronefall_multiplayer</PathMap>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

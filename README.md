@@ -9,7 +9,7 @@ fork and release their own version as long as they give credit. The previous for
 [Bwarhness/thronefall_multiplayer](https://github.com/Bwarhness/thronefall_multiplayer) (released on Thunderstore as
 ThronefallMultiplayerContinued 1.2.2), stopped working with Thronefall v2.13. Its full history is kept in this repository.
 
-## Changes since 1.2.2 (now 1.2.5)
+## Changes since 1.2.2 (now 1.2.6)
 
 **Fixes for Thronefall v2.13**
 - `UnitRespawnerForBuildings.RespawnAKnockedOutUnit` now returns `int`; the hook was rebuilt so the plugin loads again.
@@ -26,7 +26,7 @@ ThronefallMultiplayerContinued 1.2.2), stopped working with Thronefall v2.13. It
 - Recent partners: people you played with are remembered, and you are told when one of them is hosting, even when
   Steam shows them as Invisible.
 - Hosting copies a `steam://joinlobby/...` link to the clipboard, a fallback when the lobby list does not show the game.
-- Invites: **Copy Invite** in the in-game player list (toggle with the key left of 1) copies that link again, and
+- Invites: the host gets a popup with the invite after loading in, **Copy Invite** in the Esc menu copies it again, and
   **Direct Connect** (or Ctrl+V) in the Multiplayer menu joins the lobby from an invite on the clipboard.
 
 ## Install

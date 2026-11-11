@@ -275,6 +275,12 @@ public class HostPanel : BaseUI
         {
             Plugin.Instance.Network.Host(id, _currentRequest.Value.Password);
             _currentRequest = null;
+            UIManager.CreateMessageDialog(
+                "Invite",
+                $"{joinLink}\n\nThe invite is copied to your clipboard. Send it to your friend: they press Direct Connect (or Ctrl+V) in the Multiplayer menu.\n\nYou can copy it again from the Esc menu.",
+                "OK",
+                onClick: () => GUIUtility.systemCopyBuffer = joinLink
+            );
         });
 
         Enabled = false;

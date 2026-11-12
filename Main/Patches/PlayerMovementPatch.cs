@@ -42,11 +42,13 @@ static class PlayerMovementPatch
 			t.Field<float>("targetOrthSize").Value = zoomLevels[0];
 		}
 		// v2.13: SetCameraShadows (every frame) and OnDestroy need these from vanilla Start.
-		var urp = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
-		t.Field<UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset>("urpSettings").Value = urp;
+		// Unity 6: the URP asset type derives from RenderPipelineAsset<T>, which the NuGet Unity 2022 references lack,
+		// so the asset is handled untyped.
+		object urp = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline;
+		t.Field("urpSettings").SetValue(urp);
 		if (urp != null)
 		{
-			t.Field<float>("defaultShadowDist").Value = urp.shadowDistance;
+			t.Field<float>("defaultShadowDist").Value = Traverse.Create(urp).Property<float>("shadowDistance").Value;
 		}
 		var cameras = t.Field<System.Collections.Generic.List<Camera>>("cameras").Value;
 		if (cameras != null && cameras.Count > 0)
@@ -124,6 +126,12 @@ static class PlayerMovementPatch
 		{
 			zero = Vector2.zero;
 		}
+
+		// Craaghelm's barrage weapon steers the player while it fires (PlayerMovementExt.MoveScript override).
+		if (self is PlayerMovementExt && !LocalGamestate.Instance.PlayerFrozen && Traverse.Create(self).Field<bool>("barrageIntercepted").Value)
+		{
+			zero = Traverse.Create(self).Method("CalculateBarrageInput", zero).GetValue<Vector3>();
+		}
 		
 		var normalized = Vector3.ProjectOnPlane(viewTransform.Value.forward, Vector3.up).normalized;
 		var normalized2 = Vector3.ProjectOnPlane(viewTransform.Value.right, Vector3.up).normalized;
@@ -153,7 +161,7 @@ static class PlayerMovementPatch
 		}
 		sprinting.Value = (playerNetworkData.SharedData.SprintButton || sprintingToggledOn.Value) && hp.HpPercentage >= 1f;
 		velocity.Value *= (sprinting.Value ? self.sprintSpeed : self.speed);
-		velocity.Value *= playerNetworkData.SharedData.Slowed ? 0.33f : 1f;
+		velocity.Value *= playerNetworkData.SharedData.Slowed ? Traverse.Create(self).Property<float>("SpeedWhenSlowed").Value : 1f;
 		if (heavyArmorEquipped && DayNightCycle.Instance.CurrentTimestate == DayNightCycle.Timestate.Night)
 		{
 			velocity.Value *= PerkManager.instance.heavyArmor_SpeedMultiplyer;

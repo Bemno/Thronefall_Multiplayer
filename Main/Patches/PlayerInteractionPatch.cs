@@ -84,7 +84,7 @@ public static class PlayerInteractionPatch
             {
                 focussedInteractor.Value.InteractionBegin(self);
             }
-            else if (self.ManualAttack != null)
+            else if (self.ManualAttack != null && !WeaponSavvyBlocksAttack(self))
             {
                 var packet = new ManualAttackPacket { Player = data.id };
                 Plugin.Instance.Network.Send(packet, true);
@@ -107,6 +107,14 @@ public static class PlayerInteractionPatch
         BuildingInteractor.displayAllBuildPreviews = input.Value.GetButton("Preview Build Options");
     }
 
+    // Craaghelm's Weapon Savvy upgrade replaces the interact-button attack with an automatic one.
+    private static bool WeaponSavvyBlocksAttack(PlayerInteraction self)
+    {
+        return DlcConfiguration.IsDlcMap(IDlcProvider.DlcId.CRAAGHELM, self.gameObject.scene.name)
+            && DlcConfiguration.IsDlcAvailable(IDlcProvider.DlcId.CRAAGHELM)
+            && UpgradeWeaponSavvy.IsActive;
+    }
+
     private static void AddCoin(On.PlayerInteraction.orig_AddCoin original, PlayerInteraction self, int amount)
     {
         if (!Plugin.Instance.Network.Server)
@@ -121,6 +129,11 @@ public static class PlayerInteractionPatch
 
     private static void SpendCoins(On.PlayerInteraction.orig_SpendCoins orig, PlayerInteraction self, int amount)
     {
+        if (ThiefPatch.Stealing && !Plugin.Instance.Network.Server)
+        {
+            return;
+        }
+
         GlobalData.Balance -= amount;
     }
 }

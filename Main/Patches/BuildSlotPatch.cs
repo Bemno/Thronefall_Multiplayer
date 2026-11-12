@@ -12,6 +12,7 @@ public static class BuildSlotPatch
     public struct UpgradeInfo
     {
         public int Cost;
+        public int EnergyCoreCost;
         public int CurrentLevel;
     }
     
@@ -43,17 +44,31 @@ public static class BuildSlotPatch
         Identifier.Clear(IdentifierType.Ally);
         
         Plugin.Log.LogInfo("Processing buildings");
+        // Craaghelm maps nest build slots in sub-groups, so sibling indices collide; traversal order is
+        // identical on every peer and gives unique ids.
         var slots = new List<BuildSlot> { root };
+        var visited = new HashSet<BuildSlot>();
+        ushort nextId = 0;
+        // Several Craaghelm slots share respawners in their subtree; number each respawner's units once.
+        var processedRespawners = new HashSet<UnitRespawnerForBuildings>();
+        ushort nextAllyId = 0;
         while (slots.Count > 0)
         {
             var current = slots[0];
-            slots.Remove(current);
+            slots.RemoveAt(0);
+            if (!visited.Add(current))
+            {
+                continue;
+            }
             slots.AddRange(current.IsRootOf);
-            var buildingId = (ushort)current.transform.GetSiblingIndex();
+            var buildingId = nextId++;
             AssignId(current, buildingId);
             foreach (var respawn in current.GetComponentsInChildren<UnitRespawnerForBuildings>(true))
             {
-                ProcessUnits(respawn, buildingId);
+                if (processedRespawners.Add(respawn))
+                {
+                    ProcessUnits(respawn, ref nextAllyId);
+                }
             }
         }
 
@@ -87,14 +102,13 @@ public static class BuildSlotPatch
         }
     }
 
-    private static void ProcessUnits(UnitRespawnerForBuildings respawn, ushort buildingId)
+    private static void ProcessUnits(UnitRespawnerForBuildings respawn, ref ushort nextAllyId)
     {
         for (var i = 0; i < respawn.transform.childCount; ++i)
         {
             var unit = respawn.transform.GetChild(i);
             var identifier = unit.gameObject.AddComponent<Identifier>();
-            var id = (ushort)((buildingId << 7) | unit.parent.GetSiblingIndex() << 4 | unit.GetSiblingIndex());
-            identifier.SetIdentity(IdentifierType.Ally, id);
+            identifier.SetIdentity(IdentifierType.Ally, nextAllyId++);
         }
     }
 
@@ -168,6 +182,7 @@ public static class BuildSlotPatch
         return new UpgradeInfo()
         {
             Cost = upgrade.cost,
+            EnergyCoreCost = upgrade.energyCoreCost,
             CurrentLevel = building.Level
         };
     }

@@ -1,4 +1,5 @@
-﻿using MPUIKIT;
+﻿using HarmonyLib;
+using MPUIKIT;
 using Steamworks;
 using ThronefallMP.Components;
 using ThronefallMP.Network;
@@ -279,7 +280,7 @@ public class WeaponDialog : BaseUI
             rectTransform.sizeDelta = new Vector2(32, 32);
             var image = icon.AddComponent<Image>();
             image.type = Image.Type.Filled;
-            image.sprite = Equip.Convert(equipment).icon;
+            image.sprite = Traverse.Create(Equip.Convert(equipment)).Field<Sprite>("icon").Value;
             image.color = outlineNormal;
         }
         

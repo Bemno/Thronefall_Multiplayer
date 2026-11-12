@@ -9,6 +9,7 @@ public class EnemySpawnerPatch
 {
 	private static int _nextEnemyId;
 	private static int? _loadedBalance;
+	private static int _loadedEnergyCores;
 
     public static void Apply()
     {
@@ -31,6 +32,7 @@ public class EnemySpawnerPatch
 	    // dependency. (Host-only field, but it is also valid/zero on clients whose save we never restore.)
 	    var balance = GlobalData.Internal.Balance;
 	    MatchSaveLoadHandler.SaveValue(guid, "mpSharedBalance", balance);
+	    MatchSaveLoadHandler.SaveValue(guid, "mpSharedEnergyCores", GlobalData.Internal.EnergyCores);
 	    Plugin.Log.LogInfo($"[GoldDiag] saved mpSharedBalance={balance} wave={self.Wavenumber}");
     }
 
@@ -41,6 +43,8 @@ public class EnemySpawnerPatch
 	    _loadedBalance = MatchSaveLoadHandler.TryLoadValue<int>(guid, "mpSharedBalance", ref value)
 		    ? value
 		    : (int?)null;
+	    var cores = 0;
+	    _loadedEnergyCores = MatchSaveLoadHandler.TryLoadValue<int>(guid, "mpSharedEnergyCores", ref cores) ? cores : 0;
     }
 
     private static void Start(On.EnemySpawner.orig_Start original, EnemySpawner self)
@@ -62,6 +66,9 @@ public class EnemySpawnerPatch
 	    self.goldBalanceAtStart = captured + vanillaBonuses;
 
 	    GlobalData.LocalBalanceDelta = 0;
+	    GlobalData.LocalEnergyCoreDelta = 0;
+	    var restoredEnergyCores = _loadedEnergyCores;
+	    _loadedEnergyCores = 0;
 	    if (!Plugin.Instance.Network.Server)
 	    {
 		    return;
@@ -79,12 +86,14 @@ public class EnemySpawnerPatch
 		    Plugin.Log.LogInfo($"Restoring dawn-save balance {restored ?? 0}");
 		    GlobalData.Internal.Balance = restored ?? 0;
 		    GlobalData.Internal.NetWorth = 0;
+		    GlobalData.Internal.EnergyCores = restoredEnergyCores;
 	    }
 	    else
 	    {
 		    Plugin.Log.LogInfo($"Give starting balance {captured + vanillaBonuses}");
 		    GlobalData.Internal.Balance = captured + vanillaBonuses;
 		    GlobalData.Internal.NetWorth = captured + vanillaBonuses;
+		    GlobalData.Internal.EnergyCores = 0;
 	    }
     }
 
@@ -110,12 +119,15 @@ public class EnemySpawnerPatch
     private static void Update(On.EnemySpawner.orig_Update original, EnemySpawner self)
     {
         var numberOfEnemiesOnTheMap = Traverse.Create(self).Field<int>("numberOfEnemiesOnTheMap");
+        Traverse.Create(self).Field<float>("lastSpawnPeriodClock").Value += Time.deltaTime;
+        Traverse.Create(self).Method("SpawnPendingDeathSpawns").GetValue();
         if (!self.SpawningInProgress)
         {
             // Vanilla keeps the enemy count fresh while idle so the pacing gate below
             // does not act on a stale value when the next wave starts.
             numberOfEnemiesOnTheMap.Value =
                 TagManager.instance.CountAllTaggedObjectsWithTag(TagManager.ETag.EnemyOwned);
+            Traverse.Create(self).Field<float>("timeSinceSpaningEnded").Value += Time.deltaTime;
             return;
         }
 
@@ -301,8 +313,11 @@ public class EnemySpawnerPatch
 		// an identifier-less ghost copy there. The host-side death spawn is still unsynced.
 		// TODO(boss-minion-sync follow-up): route death-spawned enemies through a spawn packet
 		// with an Identifier.
+		var spawnsOnDeathAlready = DlcConfiguration.IsDlcAvailable(IDlcProvider.DlcId.CRAAGHELM)
+		    && tags.Contains(TagManager.ETag.OnDeathEnemySpawner);
 		if (Plugin.Instance.Network.Server
 		    && PerkManager.instance.GodOfAfterlifeEquipped
+		    && !spawnsOnDeathAlready
 		    && self.SpawnedUnits % 2 == 0
 		    && tags.Contains(TagManager.ETag.Humanoid))
 		{
@@ -312,6 +327,7 @@ public class EnemySpawnerPatch
 		// Advance the same bookkeeping vanilla Spawn.Update keeps so Spawn.Finished and
 		// Wave.HasFinished() observe the wave completing on every peer (the boss minion loops in
 		// Ghostqueen.SpawnGhosts and KeyframedBoss.Update depend on this).
+		EnemySpawner.totalEnemiesSpawnedThisWave++;
 		var spawnedUnits = Traverse.Create(self).Field<int>("spawnedUnits");
 		spawnedUnits.Value++;
 		if (spawnedUnits.Value >= self.count)

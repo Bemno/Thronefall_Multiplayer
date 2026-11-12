@@ -17,8 +17,25 @@ public static class PlayerSceptPatch
     {
         original(self);
         // Need to do this because the reference is wrong for dynamically instantiated players.
-        var transform = self.transform;
-        self.loadoutParent = transform.Find("Horse_LOD1/Rig/root/body/Humanoid Model Base/Civil Loadout").gameObject;
+        // Craaghelm uses a different player rig, so the base-game path is missing there.
+        var loadout = self.transform.Find("Horse_LOD1/Rig/root/body/Humanoid Model Base/Civil Loadout")
+            ?? FindDescendant(self.transform, "Civil Loadout");
+        if (loadout != null)
+        {
+            self.loadoutParent = loadout.gameObject;
+        }
+    }
+
+    private static UnityEngine.Transform FindDescendant(UnityEngine.Transform root, string name)
+    {
+        foreach (var t in root.GetComponentsInChildren<UnityEngine.Transform>(true))
+        {
+            if (t.name == name)
+            {
+                return t;
+            }
+        }
+        return null;
     }
     
     private static void Update(On.PlayerScept.orig_Update original, PlayerScept self)

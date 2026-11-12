@@ -262,6 +262,11 @@ public static class Equip
         { "Pacifist Pact", Equipment.PacifistPact },
     };
     
+    // Equippables missing from NameToEquip (Craaghelm content and later additions) get ids from 128 upwards in
+    // ordinal name order. Every peer runs the same game build with the same asset list, so the ids agree.
+    private const int FirstDynamicId = 128;
+    private static readonly Dictionary<string, Equipment> DynamicNameToEquip = new();
+
     private static readonly Dictionary<Equipment, Equippable> EquipmentToEquippable = new();
     private static readonly Dictionary<Equippable, Equipment> EquippableToEquipment = new();
     private static bool _initialized;
@@ -305,6 +310,53 @@ public static class Equip
 
             EquipmentToEquippable[equipment] = unlocked;
             EquippableToEquipment[unlocked] = equipment;
+        }
+
+        RegisterDynamicEquippables();
+    }
+
+    private static void RegisterDynamicEquippables()
+    {
+        var unmapped = new SortedDictionary<string, Equippable>(System.StringComparer.Ordinal);
+        void Collect(IEnumerable<Equippable> source)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            foreach (var equippable in source)
+            {
+                if (equippable != null && !NameToEquip.ContainsKey(equippable.name))
+                {
+                    unmapped[equippable.name] = equippable;
+                }
+            }
+        }
+
+        Collect(PerkManager.instance.allEquippables);
+        Collect(PerkManager.instance.metaLevelByPerk?.Keys);
+        Collect(PerkManager.instance.craaghelmMetaLevelByPerk?.Keys);
+
+        var id = FirstDynamicId;
+        foreach (var pair in unmapped)
+        {
+            if (id > byte.MaxValue)
+            {
+                Plugin.Log.LogWarning($"No equipment id left for '{pair.Key}'");
+                break;
+            }
+
+            var equipment = (Equipment)id++;
+            DynamicNameToEquip[pair.Key] = equipment;
+            if (pair.Value is EquippableWeapon)
+            {
+                Weapons.Add(equipment);
+            }
+
+            EquipmentToEquippable[equipment] = pair.Value;
+            EquippableToEquipment[pair.Value] = equipment;
+            Plugin.Log.LogInfoFiltered("Equipment", $"- {(int)equipment} = {pair.Key} (dynamic)");
         }
     }
 
@@ -355,6 +407,16 @@ public static class Equip
     
     public static Equipment Convert(string name)
     {
-        return NameToEquip.GetValueSafe(name);
+        if (NameToEquip.TryGetValue(name, out var equipment))
+        {
+            return equipment;
+        }
+
+        if (!_initialized && PerkManager.instance != null)
+        {
+            InitializeDictionaries();
+        }
+
+        return DynamicNameToEquip.GetValueSafe(name);
     }
 }

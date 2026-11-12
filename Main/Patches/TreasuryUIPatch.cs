@@ -34,7 +34,27 @@ public class TreasuryUIPatch
 
         Traverse.Create(self).Field<Transform>("scaleTarget").Value = UIFrameManager.instance.TreasureChest.scaleTarget;
         Traverse.Create(self).Field<TextMeshProUGUI>("displayText").Value = UIFrameManager.instance.TreasureChest.balanceNumber;
+        SetupCurrencyUI(self);
         Traverse.Create(self).Method("SetState", currentState.Value).GetValue();
+    }
+
+    // Mirrors vanilla Start's currency setup: on Craaghelm maps gold shows as mithril and energy cores get a second line.
+    private static void SetupCurrencyUI(TreasuryUI self)
+    {
+        var t = Traverse.Create(self);
+        var dlcAvailable = DlcConfiguration.IsDlcAvailable(IDlcProvider.DlcId.CRAAGHELM);
+        t.Field<bool>("isCraaghelmDlcAvailable").Value = dlcAvailable;
+        if (dlcAvailable)
+        {
+            Traverse.Create(typeof(CraaghelmStaticResources)).Method("get_TMPTextIcons").GetValue();
+        }
+
+        var coinIcon = DlcConfiguration.IsScenePartOfDlc(IDlcProvider.DlcId.CRAAGHELM)
+            ? CraaghelmStaticResources.CraaghelmMithrilIconName
+            : "coin";
+        t.Field<string>("coinTextPrefix").Value = $"<sprite name={coinIcon}>";
+        t.Field<string>("energyCoreTextPrefix").Value = $"<sprite name={CraaghelmStaticResources.CraaghelmEnergyCoreIconName}>";
+        t.Method(t.Method("IsSecondCurrencyAvailable").GetValue<bool>() ? "SetupSecondCurrencyUI" : "SetupSingleCurrencyUI").GetValue();
     }
 
     private static void Update(On.TreasuryUI.orig_Update original, TreasuryUI self)

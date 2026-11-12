@@ -76,7 +76,7 @@ public static class DayNightCyclePatch
             }
         }
         ThronefallAudioManager.Oneshot(ThronefallAudioManager.AudioOneShot.BuildingRepair);
-        var levelDataForActiveScene = LevelProgressManager.instance.GetLevelDataForActiveScene();
+        var levelDataForActiveScene = LevelProgressManager.instance.GetLevelDataForActiveScene(null);
         var num = GlobalData.NetWorth;
         num += TagManager.instance.freeCoins.Count;
         num += self.CoinCountToBeHarvested;
@@ -88,6 +88,17 @@ public static class DayNightCyclePatch
             if (coin.IsFree)
             {
                 coin.SetTarget(closest);
+            }
+        }
+
+        if (DlcConfiguration.IsDlcAvailable(IDlcProvider.DlcId.CRAAGHELM))
+        {
+            foreach (var core in TagManager.instance.freeEnergyCores)
+            {
+                if (core.IsFree)
+                {
+                    core.SetTarget(Helpers.FindClosest(players, core.transform.position));
+                }
             }
         }
     }
@@ -112,6 +123,21 @@ public static class DayNightCyclePatch
         ThronefallAudioManager.Oneshot(ThronefallAudioManager.AudioOneShot.NightSurvived);
     }
     
+    // Ally units without an Identifier are invisible to AllyPathfinderSync/HpSync. New unit types (Craaghelm) may
+    // spawn outside the paths BuildSlotPatch tags, so list them once per night to find the gaps.
+    private static void LogUnidentifiedAllies()
+    {
+        var missing = Object.FindObjectsOfType<PathfindMovementPlayerunit>()
+            .Where(unit => unit.GetComponentInParent<ThronefallMP.Components.Identifier>() == null)
+            .GroupBy(unit => unit.GetType().Name + "/" + unit.gameObject.name)
+            .Select(group => $"{group.Key} x{group.Count()}")
+            .ToList();
+        if (missing.Count > 0)
+        {
+            Plugin.Log.LogWarning("[AllyDiag] Units without Identifier: " + string.Join(", ", missing));
+        }
+    }
+
     private static void DuskCall(On.DayNightCycle.orig_DuskCall original, DayNightCycle self)
     {
         var afterSunrise = Traverse.Create(self).Field<bool>("afterSunrise");
@@ -120,6 +146,7 @@ public static class DayNightCyclePatch
 
         afterSunrise.Value = false;
         currentNightLength.Value = 0f;
+        LogUnidentifiedAllies();
         for (int i = daytimeSensitiveObjects.Value.Count - 1; i >= 0; i--)
         {
             if (Helpers.UnityNullCheck(daytimeSensitiveObjects.Value[i]))

@@ -7,6 +7,7 @@ public struct InternalGlobalData
 {
     public int Balance;
     public int NetWorth;
+    public int EnergyCores;
 }
 
 public static class GlobalData
@@ -36,4 +37,23 @@ public static class GlobalData
     }
     
     public static int NetWorth => Internal.NetWorth;
+
+    // Craaghelm's second currency, pooled like gold: the server owns the value, clients add a local delta until
+    // the server confirms or cancels their spend.
+    public static int LocalEnergyCoreDelta;
+    public static int EnergyCores
+    {
+        get => Plugin.Instance.Network.Server ? Internal.EnergyCores : Internal.EnergyCores + LocalEnergyCoreDelta;
+        set
+        {
+            if (Plugin.Instance.Network.Server)
+            {
+                Internal.EnergyCores = value;
+            }
+            else
+            {
+                LocalEnergyCoreDelta = value - Internal.EnergyCores;
+            }
+        }
+    }
 }

@@ -11,7 +11,8 @@ public class ResourceSync : BaseSync
         return new SyncResourcePacket
         {
             Balance = GlobalData.Internal.Balance,
-            NetWorth = GlobalData.Internal.NetWorth
+            NetWorth = GlobalData.Internal.NetWorth,
+            EnergyCores = GlobalData.Internal.EnergyCores
         };
     }
 
@@ -21,7 +22,8 @@ public class ResourceSync : BaseSync
         var b = (SyncResourcePacket)last;
 
         return a.Balance == b.Balance &&
-               a.NetWorth == b.NetWorth;
+               a.NetWorth == b.NetWorth &&
+               a.EnergyCores == b.EnergyCores;
     }
 
     public override bool CanHandle(BasePacket packet)
@@ -34,5 +36,6 @@ public class ResourceSync : BaseSync
         var sync = (SyncResourcePacket)packet;
         GlobalData.Internal.Balance = sync.Balance;
         GlobalData.Internal.NetWorth = sync.NetWorth;
+        GlobalData.Internal.EnergyCores = sync.EnergyCores;
     }
 }

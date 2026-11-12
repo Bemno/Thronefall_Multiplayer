@@ -112,7 +112,12 @@ public class LevelDataSync : BaseSync
             return;
         }
 
-        if (packet.To == "_LevelSelect")
+        if (DlcOwnership.BlockTransition(packet.To))
+        {
+            return;
+        }
+
+        if (DlcOwnership.IsLevelSelect(packet.To))
         {
             SceneTransitionManagerPatch.Transition(packet.To, packet.From);
             return;

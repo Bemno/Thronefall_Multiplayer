@@ -12,7 +12,23 @@ ThronefallMultiplayerContinued 1.2.2), stopped working with Thronefall v2.13. It
 This fork was developed with the help of Claude (Anthropic), an AI assistant, which wrote much of the code
 and documentation under human direction and in-game testing.
 
-## Changes since 1.2.2 (now 1.2.6)
+## Craaghelm DLC support (1.2.7, experimental)
+
+1.2.7 adds support for the Craaghelm DLC. It has only been tested in singleplayer so far; online play on
+Craaghelm maps is untested. The same build works with and without the DLC.
+
+- Energy cores are a shared currency like gold, building boosts are synced, thieves steal once, and enemies that
+  split on death spawn the same copies for everyone.
+- DLC weapons and perks are synced in the loadout.
+- The host is told which player is missing the DLC when a Craaghelm map is started; base-game maps still work.
+- Build slots and their units are now numbered in a stable traversal order, because Craaghelm maps nest build slots
+  in groups and the old numbering put purchases on the wrong building.
+- Fixes for errors with the Craaghelm player rig and the barrage weapon's steering.
+
+Known gaps: boss phase changes and randomness, energy objects charged at certain waves, and both ends of tunnels
+may not be synced yet.
+
+## Changes since 1.2.2 (up to 1.2.6)
 
 **Fixes for Thronefall v2.13**
 - `UnitRespawnerForBuildings.RespawnAKnockedOutUnit` now returns `int`; the hook was rebuilt so the plugin loads again.

@@ -59,6 +59,11 @@ public static class SceneTransitionManagerPatch
     {
         if (_transitionHookEnabled && scene != "_StartMenu" && Plugin.Instance.Network.Online)
         {
+            if (DlcOwnership.BlockTransition(scene))
+            {
+                return;
+            }
+
             var packet = new RequestLevelPacket
             {
                 To = scene,
@@ -89,7 +94,7 @@ public static class SceneTransitionManagerPatch
         }
         
         CurrentScene = scene;
-        InLevelSelect = self.levelSelectScene == scene;
+        InLevelSelect = DlcOwnership.IsLevelSelect(scene);
         Plugin.Log.LogInfo($"Transitioning '{scene}'");
         foreach (var data in Plugin.Instance.PlayerManager.GetAllPlayerData())
         {

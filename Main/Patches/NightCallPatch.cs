@@ -34,7 +34,7 @@ public static class NightCallPatch
             // globally via the canvas reference-resolution factor, so this element no longer scales itself.
             self.scaleParent.localScale = Vector3.one;
             
-            if (data.SharedData.CallNightButton && player.IsFreeToCallNight)
+            if (data.SharedData.CallNightButton && player.IsFreeToCallNight && !DayNightCycle.Instance.AutomatedDaytime)
             {
                 currentFill.Value += Time.deltaTime * (1f / self.nightCallTime);
             }

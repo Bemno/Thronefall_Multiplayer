@@ -396,6 +396,7 @@ public class Network : MonoBehaviour
         player.SpawnID = 0;
         Plugin.Instance.PlayerManager.InstantiatePlayer(player, player.SpawnLocation);
         SteamMatchmaking.SetLobbyJoinable(lobby, true);
+        DlcOwnership.Publish(lobby);
     }
 
     public void ConnectLobby(CSteamID lobby, string password)
@@ -412,6 +413,7 @@ public class Network : MonoBehaviour
         Lobby = lobby;
         Server = false;
         Online = true;
+        DlcOwnership.Publish(lobby);
         Plugin.Instance.PlayerManager.Clear();
         Owner = SteamMatchmaking.GetLobbyOwner(lobby);
         
@@ -452,8 +454,11 @@ public class Network : MonoBehaviour
             return;
         }
 
-        Plugin.Log.LogInfoFiltered("Network", $"Can join lobby: {SceneManager.GetSceneByName("_LevelSelect").isLoaded}");
-        SteamMatchmaking.SetLobbyJoinable(Lobby, SceneManager.GetSceneByName("_LevelSelect").isLoaded);
+        var manager = SceneTransitionManager.instance;
+        var joinable = SceneManager.GetSceneByName("_LevelSelect").isLoaded
+            || (manager != null && SceneManager.GetSceneByName(manager.levelSelectSceneCraaghelm).isLoaded);
+        Plugin.Log.LogInfoFiltered("Network", $"Can join lobby: {joinable}");
+        SteamMatchmaking.SetLobbyJoinable(Lobby, joinable);
     }
 
     public void Send(BasePacket basePacket, bool handleLocal = false, CSteamID except = new())
@@ -582,6 +587,8 @@ public class Network : MonoBehaviour
         { CommandPlacePacket.PacketID, typeof(CommandPlacePacket) },
         { CommandHoldPositionPacket.PacketID, typeof(CommandHoldPositionPacket) },
         { ConfirmBuildPacket.PacketID, typeof(ConfirmBuildPacket) },
+        { BoostBuildingPacket.PacketID, typeof(BoostBuildingPacket) },
+        { DeathSpawnPacket.PacketID, typeof(DeathSpawnPacket) },
         { ManualAttackPacket.PacketID, typeof(ManualAttackPacket) },
     };
 

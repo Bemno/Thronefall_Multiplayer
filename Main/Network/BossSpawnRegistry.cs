@@ -68,6 +68,22 @@ public static class BossSpawnRegistry
             }
         }
 
+        // Craaghelm bosses (Crystal Dragon, Construct Colossus) summon minions through InstantEnemySpawn, which
+        // drives its private Wave the same way KeyframedBoss does.
+        foreach (var spawner in Object.FindObjectsOfType<InstantEnemySpawn>(true))
+        {
+            var wave = Traverse.Create(spawner).Field<Wave>("wave").Value;
+            if (wave?.spawns == null)
+            {
+                continue;
+            }
+
+            for (var i = 0; i < wave.spawns.Count; ++i)
+            {
+                entries.Add((Helpers.GetPath(spawner.transform), i, wave.spawns[i]));
+            }
+        }
+
         entries.Sort((a, b) =>
         {
             var order = string.CompareOrdinal(a.path, b.path);

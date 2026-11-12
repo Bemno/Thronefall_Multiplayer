@@ -63,6 +63,8 @@ public enum PacketId
     LoadoutClose,
     LoadoutStateRequest,
     HostUnlocks,
+    BoostBuilding,
+    DeathSpawn,
 }
 
 public static class PacketHandler
@@ -85,6 +87,7 @@ public static class PacketHandler
         { DamageFeedbackPacket.PacketID, HandleDamageFeedback },
         { DayNightPacket.PacketID, HandleDayNight },
         { EnemySpawnPacket.PacketID, HandleEnemySpawn },
+        { DeathSpawnPacket.PacketID, (_, packet) => DeathSpawnPatch.Handle((DeathSpawnPacket)packet) },
         { LockTargetPacket.PacketID, HandleLockTarget },
         { TeleportPlayerPacket.PacketID, HandlePlayerTeleport },
         { ResignPacket.PacketID, HandleResign },
@@ -96,6 +99,7 @@ public static class PacketHandler
         { CommandPlacePacket.PacketID, HandleCommandPlace },
         { CommandHoldPositionPacket.PacketID, HandleCommandHoldPosition },
         { ConfirmBuildPacket.PacketID, HandleConfirmBuild },
+        { BoostBuildingPacket.PacketID, (sender, packet) => BuildingBoostPatch.Handle(sender.GetSteamID(), (BoostBuildingPacket)packet) },
         { ManualAttackPacket.PacketID, HandleManualAttack },
     };
 
@@ -711,7 +715,7 @@ public static class PacketHandler
         
         var packet = (BuildOrUpgradePacket)ipacket;
         var info = BuildSlotPatch.GetUpgradeInfo(packet.BuildingId, packet.Level, packet.Choice);
-        if (GlobalData.Balance < info.Cost || info.CurrentLevel > packet.Level)
+        if (GlobalData.Balance < info.Cost || GlobalData.EnergyCores < info.EnergyCoreCost || info.CurrentLevel > packet.Level)
         {
             Plugin.Log.LogInfoFiltered("PacketHandler", $"Cancel building {packet.BuildingId}:{packet.Level}:{packet.Choice} for {info.Cost}");
             Plugin.Instance.Network.SendSingle(new CancelBuildPacket()
@@ -730,6 +734,7 @@ public static class PacketHandler
                 PlayerID = Plugin.Instance.PlayerManager.Get(sender.GetSteamID()).Id
             }, true);
             GlobalData.Balance -= info.Cost;
+            GlobalData.EnergyCores -= info.EnergyCoreCost;
         }
     }
 
@@ -739,6 +744,7 @@ public static class PacketHandler
         Plugin.Log.LogInfoFiltered("PacketHandler", $"Local build of {packet.BuildingId} cancelled");
         BuildSlotPatch.CancelBuild(packet.BuildingId);
         GlobalData.LocalBalanceDelta = 0;
+        GlobalData.LocalEnergyCoreDelta = 0;
     }
 
     private static void HandleConfirmBuild(SteamNetworkingIdentity sender, BasePacket ipacket)
@@ -748,6 +754,7 @@ public static class PacketHandler
         {
             Plugin.Log.LogInfoFiltered("PacketHandler", $"Local build of {packet.BuildingId}:{packet.Level}:{packet.Choice} confirmed");
             GlobalData.LocalBalanceDelta = 0;
+            GlobalData.LocalEnergyCoreDelta = 0;
         }
         else
         {

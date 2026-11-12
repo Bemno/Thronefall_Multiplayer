@@ -54,8 +54,27 @@ Easiest: run `Thronefall-Multiplayer-Installer.exe` from the [Releases](../../re
 Steam, closes the game and installs BepInEx plus the mod. The exe is unsigned, so Windows SmartScreen will warn
 ("More info" -> "Run anyway").
 
-Manual: install [BepInExPack_Thronefall](https://thunderstore.io/c/thronefall/p/BepInEx/BepInExPack_Thronefall/), then
-put `com.badwolf.thronefall_mp.dll` in `BepInEx/plugins/ThronefallMultiplayer/`.
+Manual:
+
+1. Find the game folder: in Steam, right-click Thronefall -> Manage -> Browse local files. It is usually
+   `C:\Program Files (x86)\Steam\steamapps\common\Thronefall\` or `<your Steam library>\steamapps\common\Thronefall\`.
+2. Extract [BepInExPack_Thronefall](https://thunderstore.io/c/thronefall/p/BepInEx/BepInExPack_Thronefall/) into that
+   folder, so that `winhttp.dll` and the `BepInEx` folder sit next to `Thronefall.exe`.
+3. Start the game once and close it, so BepInEx creates its folders.
+4. Put `com.badwolf.thronefall_mp.dll` in `Thronefall\BepInEx\plugins\ThronefallMultiplayer\` (create the
+   `ThronefallMultiplayer` folder if it does not exist).
+
+Resulting layout:
+
+```
+Thronefall\
+  Thronefall.exe
+  winhttp.dll
+  BepInEx\
+    plugins\
+      ThronefallMultiplayer\
+        com.badwolf.thronefall_mp.dll
+```
 
 All players must run the same build.
 

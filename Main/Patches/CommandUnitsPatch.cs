@@ -33,6 +33,24 @@ public static class CommandUnitsPatch
             return;
         }
         
+        if (Plugin.Instance.Network.Server && data.SharedData.CommandUnitsButton && !_diagPressed.Contains(data.id))
+        {
+            _diagPressed.Add(data.id);
+            LogCommandDiag(self, data);
+        }
+        else if (!data.SharedData.CommandUnitsButton)
+        {
+            _diagPressed.Remove(data.id);
+        }
+
+        // A commanding state with nobody left to command (units placed, died or lost an input edge) blocked
+        // calling new units for good.
+        if (self.commanding && units.Value.Count == 0 && !data.SharedData.CommandUnitsButton)
+        {
+            self.commanding = false;
+            data.CommandUnitsButtonLast = false;
+        }
+
         if (self.commanding)
         {
             HandleCommanding(self, data);
@@ -46,7 +64,9 @@ public static class CommandUnitsPatch
         {
             var unit = units.Value[i];
             unit.HomePosition = self.transform.position;
-            if (!unit.enabled)
+            // Knocked-out units otherwise stayed in the list and counted as taken by this player after respawning.
+            var unitHp = unit.GetComponent<Hp>();
+            if (!unit.enabled || (unitHp != null && unitHp.KnockedOut))
             {
                 units.Value.RemoveAt(i);
                 self.OnUnitRemove(unit);
@@ -167,6 +187,38 @@ public static class CommandUnitsPatch
         }
 
         return false;
+    }
+
+    private static readonly HashSet<ushort> _diagPressed = new();
+
+    // DIAGNOSTIC (client could not call units): what the host sees when a player presses the command button.
+    private static void LogCommandDiag(CommandUnits self, PlayerNetworkData data)
+    {
+        var hp = Traverse.Create(self).Field<Hp>("hpPlayer").Value;
+        var tagManager = Traverse.Create(self).Field<TagManager>("tagManager").Value;
+        int inRange = 0, owned = 0, noMovement = 0;
+        foreach (var taggedObject in TagManager.instance.PlayerUnits)
+        {
+            if (tagManager.MeasureDistanceToTaggedObject(taggedObject, self.transform.position) > self.attractRange)
+            {
+                continue;
+            }
+
+            inRange++;
+            var unit = taggedObject.GetComponent<PathfindMovementPlayerunit>();
+            if (unit == null)
+            {
+                noMovement++;
+            }
+            else if (IsCommandedByAnyPlayer(unit))
+            {
+                owned++;
+            }
+        }
+
+        Plugin.Log.LogInfo($"[CommandDiag] player {data.id} pressed: hp={(hp != null ? hp.HpValue : -1f)} " +
+                           $"commanding={self.commanding} list={self.PlayerUnitsCommanding.Count} inRange={inRange} " +
+                           $"owned={owned} noMovement={noMovement} range={self.attractRange} units={TagManager.instance.PlayerUnits.Count}");
     }
 
     private static void HandleNotCommanding(CommandUnits self, List<PathfindMovementPlayerunit> commanding, PlayerNetworkData data)

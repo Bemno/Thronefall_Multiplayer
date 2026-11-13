@@ -138,6 +138,13 @@ public static class BuildSlotPatch
             return;
         }
         
+        if (!_disableNetworkHook && choice != null && self.ActivatorUpgradesThis && !Plugin.Instance.Network.Server)
+        {
+            // Part of a group (wall pieces) that vanilla builds together with its activator. Only the activator is
+            // requested and paid for; the host builds the whole group like its own build (UpgradeDependents).
+            return;
+        }
+
         if (!_disableNetworkHook && choice != null)
         {
             var buildingId = self.GetComponent<Identifier>().Id;
@@ -197,7 +204,8 @@ public static class BuildSlotPatch
         {
             Cost = upgrade.cost,
             EnergyCoreCost = upgrade.energyCoreCost,
-            CurrentLevel = building.Level
+            // Not building.Level: for group members that returns the activator's level, which rejected valid builds.
+            CurrentLevel = Traverse.Create(building).Field<int>("level").Value
         };
     }
 
@@ -249,6 +257,10 @@ public static class BuildSlotPatch
             diagFuserActive = fuser != null && fuser.gameObject.activeInHierarchy;
         }
         Plugin.Log.LogInfo($"[BuildDiag] built id={id} lvl={building.Level} byPlayer={playerId} local={Plugin.Instance.PlayerManager.LocalId} bpActive={(diagParent != null && diagParent.activeInHierarchy)} meshTracker={(diagTracker != null)} fuserActive={diagFuserActive}");
+        if (!diagFuserActive)
+        {
+            LogSlotDetails(building, id, diagParent);
+        }
 
         var focussed = Traverse.Create(building.buildingInteractor).Field<bool>("focussed");
         if (building.buildingInteractor.IsWaitingForChoice)
@@ -318,6 +330,48 @@ public static class BuildSlotPatch
             selected.Value = null;
             Plugin.Log.LogInfo($"[BuildDiag] slot {id}: also built dependent '{dependent.name}' to level {dependentLevel + 1}");
         }
+    }
+
+    // DIAGNOSTIC (wall parts missing on the host when a client builds): describe the slot so it can be identified.
+    private static void LogSlotDetails(BuildSlot building, ushort id, GameObject buildingParent)
+    {
+        var path = building.name;
+        for (var node = building.transform.parent; node != null; node = node.parent)
+        {
+            path = node.name + "/" + path;
+        }
+
+        var inactive = new List<string>();
+        if (buildingParent != null)
+        {
+            foreach (var child in buildingParent.GetComponentsInChildren<Transform>(true))
+            {
+                if (!child.gameObject.activeSelf)
+                {
+                    inactive.Add(child.name);
+                }
+            }
+        }
+
+        var dependents = Traverse.Create(building).Field<List<BuildSlot>>("builtSlotsThatRelyOnThisBuilding").Value;
+        var dependentInfo = new List<string>();
+        if (dependents != null)
+        {
+            foreach (var dependent in dependents)
+            {
+                if (dependent != null)
+                {
+                    dependentInfo.Add($"{dependent.name}(upgradesThis={dependent.ActivatorUpgradesThis}, active={dependent.gameObject.activeInHierarchy})");
+                }
+            }
+        }
+
+        var tracker = Traverse.Create(building).Field<BuildingMeshTracker>("buildingMeshTracker").Value;
+        var fuser = tracker != null ? Traverse.Create(tracker).Field<NGS.MeshFusionPro.MeshFusionSource>("meshFuser").Value : null;
+        Plugin.Log.LogInfo($"[BuildDiag] slot {id} path={path} activator={(building.ActivatorBuilding != null ? building.ActivatorBuilding.name : "none")} " +
+                           $"upgradesThis={building.ActivatorUpgradesThis} startDeactivated={Traverse.Create(building).Field<bool>("startDeactivated").Value} " +
+                           $"gotActivated={Traverse.Create(building).Field<bool>("gotActivated").Value} fuser={(fuser != null ? fuser.name : "null")} " +
+                           $"dependents=[{string.Join(", ", dependentInfo)}] inactive=[{string.Join(", ", inactive)}]");
     }
 
     public static void CancelBuild(ushort id)

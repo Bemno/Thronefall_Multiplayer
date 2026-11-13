@@ -26,8 +26,74 @@ public static class SceneTransitionManagerPatch
     }
 
     private static (string to, string from)? _queuedTransition;
+
+    // The end screen awards XP and saves the beaten level, score and progress only at the end of its animation.
+    // A transition started by another player cut that short, so only the player who pressed Continue kept the win.
+    private static bool _afterMatchSaved = true;
+    private static (string to, string from)? _deferredUntilSaved;
+    private const float AfterMatchSaveTimeout = 30f;
+
+    private static bool WaitingForAfterMatchSave =>
+        !_afterMatchSaved && LocalGamestate.Instance != null &&
+        LocalGamestate.Instance.CurrentState is LocalGamestate.State.AfterMatchVictory or LocalGamestate.State.AfterMatchDefeat;
+
+    private static IEnumerator TransitionAfterMatchSave()
+    {
+        var waited = 0f;
+        while (WaitingForAfterMatchSave && waited < AfterMatchSaveTimeout)
+        {
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        var deferred = _deferredUntilSaved;
+        _deferredUntilSaved = null;
+        _afterMatchSaved = true;
+        if (deferred.HasValue)
+        {
+            Transition(deferred.Value.to, deferred.Value.from);
+        }
+    }
+
+    [HarmonyPatch(typeof(LocalGamestate), nameof(LocalGamestate.SetState))]
+    private static class SetStatePatch
+    {
+        private static void Postfix(LocalGamestate __instance)
+        {
+            if (__instance.CurrentState is LocalGamestate.State.AfterMatchVictory or LocalGamestate.State.AfterMatchDefeat)
+            {
+                _afterMatchSaved = false;
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(SaveLoadManager), nameof(SaveLoadManager.SaveGame))]
+    private static class SaveGamePatch
+    {
+        private static void Postfix()
+        {
+            if (LocalGamestate.Instance != null &&
+                LocalGamestate.Instance.CurrentState is LocalGamestate.State.AfterMatchVictory or LocalGamestate.State.AfterMatchDefeat)
+            {
+                _afterMatchSaved = true;
+            }
+        }
+    }
+
     public static void Transition(string to, string from)
     {
+        if (WaitingForAfterMatchSave)
+        {
+            if (_deferredUntilSaved == null)
+            {
+                Plugin.Log.LogInfo($"Waiting for the end screen to save before going to '{to}'");
+                Plugin.Instance.StartCoroutine(TransitionAfterMatchSave());
+            }
+
+            _deferredUntilSaved = (to, from);
+            return;
+        }
+
         if (SceneTransitionManager.instance.SceneTransitionIsRunning)
         {
             _queuedTransition = (to, from);

@@ -98,13 +98,20 @@ public class HostPanel : BaseUI
         
         // TODO: Add validation on the fields, don't allow hosting unless options are valid.
         var placeholder = SteamManager.Initialized ? SteamFriends.GetPersonaName() : "Unavailable";
-        var nameField = UIHelper.CreateInputField(panel, "name", "Name", $"{placeholder}'s Game", LabelWidth, 24);
-        var passwordField = UIHelper.CreateInputField(panel, "password", "Password", "", LabelWidth, 24);
+        var config = Plugin.Instance.Config;
+        var savedName = config.Bind("Host", "Name", "", "Last lobby name used when hosting (empty = '<you>'s Game').");
+        var savedPassword = config.Bind("Host", "Password", "", "Last lobby password used when hosting.");
+        var savedMaxPlayers = config.Bind("Host", "MaxPlayers", 8, "Last player limit used when hosting.");
+        var savedFriendsOnly = config.Bind("Host", "FriendsOnly", false, "Last Friends Only choice when hosting.");
+        var savedCheats = config.Bind("Host", "EnableCheats", false, "Last Enable Cheats choice when hosting.");
+        var defaultName = string.IsNullOrEmpty(savedName.Value) ? $"{placeholder}'s Game" : savedName.Value;
+        var nameField = UIHelper.CreateInputField(panel, "name", "Name", defaultName, LabelWidth, 24);
+        var passwordField = UIHelper.CreateInputField(panel, "password", "Password", savedPassword.Value, LabelWidth, 24);
         passwordField.contentType = TMP_InputField.ContentType.Password;
-        var maxPlayersField = UIHelper.CreateInputField(panel, "max_players", "Players", "8", LabelWidth, 2);
+        var maxPlayersField = UIHelper.CreateInputField(panel, "max_players", "Players", savedMaxPlayers.Value.ToString(), LabelWidth, 2);
         maxPlayersField.contentType = TMP_InputField.ContentType.DecimalNumber;
-        var friendsOnlyToggle = CreateToggle(panel, "friends_only", "Friends Only", false);
-        var enableCheatsToggle = CreateToggle(panel, "cheats_enabled", "Enable Cheats", false);
+        var friendsOnlyToggle = CreateToggle(panel, "friends_only", "Friends Only", savedFriendsOnly.Value);
+        var enableCheatsToggle = CreateToggle(panel, "cheats_enabled", "Enable Cheats", savedCheats.Value);
         
         var buttons = UIHelper.CreateUIObject("buttons", panel);
         {
@@ -132,6 +139,15 @@ public class HostPanel : BaseUI
         Host.OnClick += () =>
         {
             Plugin.Log.LogInfo($"Creating {(friendsOnlyToggle.Toggle.isOn ? "friends only" : "public")} lobby");
+            savedName.Value = nameField.text == $"{placeholder}'s Game" ? "" : nameField.text;
+            savedPassword.Value = passwordField.text;
+            if (int.TryParse(maxPlayersField.text, out var maxPlayers))
+            {
+                savedMaxPlayers.Value = maxPlayers;
+            }
+            savedFriendsOnly.Value = friendsOnlyToggle.Toggle.isOn;
+            savedCheats.Value = enableCheatsToggle.Toggle.isOn;
+            config.Save();
             CreateLobby(new LobbyCreationRequest
             {
                 Name = nameField.text,

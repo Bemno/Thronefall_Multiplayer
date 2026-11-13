@@ -27,9 +27,10 @@ public class SaveSync : MonoBehaviour
     private static bool IsHost => Plugin.Instance.Network.Online && Plugin.Instance.Network.Server;
 
     private static string FullPath(string map) =>
-        SaveServicesLocator.Instance.GetFullSavePath("mp_" + map + ".json");
+        SaveServicesLocator.Instance.GetFullSavePath(Patches.MatchSavePathPatch.FilePrefix + map + ".json");
 
-    public static void SendSave(string map)
+    // fresh: the level is being started over, so clients must not load the existing save.
+    public static void SendSave(string map, bool fresh = false)
     {
         if (!IsHost || string.IsNullOrEmpty(map))
         {
@@ -40,7 +41,7 @@ public class SaveSync : MonoBehaviour
         try
         {
             var path = FullPath(map);
-            if (SaveServicesLocator.Instance.Exists(path))
+            if (!fresh && SaveServicesLocator.Instance.Exists(path))
             {
                 json = SaveServicesLocator.Instance.ReadAllText(path);
             }

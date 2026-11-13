@@ -18,7 +18,7 @@ public class ModUpdater : MonoBehaviour
     private const int RequestChannel = 90;
     private const int ResponseChannel = 91;
     private const string Magic = "TFMPDLL1";
-    private const int MaxDllSize = 500 * 1024;
+    public const int MaxDllSize = 500 * 1024;
     private const float TimeoutSeconds = 30f;
 
     private static string DllPath => typeof(Plugin).Assembly.Location;
@@ -192,28 +192,33 @@ public class ModUpdater : MonoBehaviour
                 }
             }
 
-            // A loaded DLL cannot be overwritten on Windows but can be renamed; the .old copy is removed on next start.
-            var temp = DllPath + ".new";
-            File.WriteAllBytes(temp, dll);
-            if (File.Exists(DllPath + ".old"))
-            {
-                File.Delete(DllPath + ".old");
-            }
-            File.Move(DllPath, DllPath + ".old");
-            File.Move(temp, DllPath);
-
-            Plugin.Log.LogInfo($"Updater> installed {version}");
             Leave(_awaitingLobby);
             _awaitingFrom = CSteamID.Nil;
-            UIManager.CreateMessageDialog("Updated",
-                $"Installed Multiplayer v{version.Replace("thronefall_mp_", "")}.\nRestart Thronefall to use it.",
-                "Quit game",
-                onClick: Application.Quit);
+            InstallDll(dll, version.Replace("thronefall_mp_", ""));
         }
         catch (Exception e)
         {
             Fail($"The update failed: {e.Message}");
         }
+    }
+
+    public static void InstallDll(byte[] dll, string version)
+    {
+        // A loaded DLL cannot be overwritten on Windows but can be renamed; the .old copy is removed on next start.
+        var temp = DllPath + ".new";
+        File.WriteAllBytes(temp, dll);
+        if (File.Exists(DllPath + ".old"))
+        {
+            File.Delete(DllPath + ".old");
+        }
+        File.Move(DllPath, DllPath + ".old");
+        File.Move(temp, DllPath);
+
+        Plugin.Log.LogInfo($"Updater> installed {version}");
+        UIManager.CreateMessageDialog("Updated",
+            $"Installed Multiplayer v{version}.\nRestart Thronefall to use it.",
+            "Quit game",
+            onClick: Application.Quit);
     }
 
     private void Fail(string message)

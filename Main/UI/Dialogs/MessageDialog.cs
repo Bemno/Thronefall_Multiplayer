@@ -38,6 +38,16 @@ public class MessageDialog : BaseUI
         set => _button.Text.text = value;
     }
 
+    // A second button that only closes the dialog; hidden unless given a text.
+    public string SecondButtonText
+    {
+        set
+        {
+            _secondButton.Text.text = value;
+            _secondButton.gameObject.SetActive(true);
+        }
+    }
+
     public Color Color
     {
         get => _message.color;
@@ -48,6 +58,7 @@ public class MessageDialog : BaseUI
     private TextMeshProUGUI _message;
     private GameObject _background;
     private ButtonControl _button;
+    private ButtonControl _secondButton;
     
     public override void ConstructPanelContent()
     {
@@ -164,6 +175,11 @@ public class MessageDialog : BaseUI
             OnClick?.Invoke();
             Destroy(gameObject);
         };
+
+        _secondButton = UIHelper.CreateButton(buttons, "second_button", "Cancel");
+        UIHelper.SetLayoutElement(_secondButton.gameObject, minWidth: 100);
+        _secondButton.OnClick += () => Destroy(gameObject);
+        _secondButton.gameObject.SetActive(false);
         
         LayoutRebuilder.ForceRebuildLayoutImmediate(panelBorders.GetComponent<RectTransform>());
     }

@@ -136,8 +136,7 @@ public static class CommandUnitsPatch
                 continue;
             }
 
-            var followingPlayer = Traverse.Create(unit).Field<bool>("followingPlayer");
-            if (!followingPlayer.Value && !commanding.Contains(unit))
+            if (!IsCommandedByAnyPlayer(unit))
             {
                 toAdd.Add(new IdentifierData(unit.GetComponent<Identifier>()));
             }
@@ -151,6 +150,23 @@ public static class CommandUnitsPatch
                 Units = toAdd
             }, true);
         }
+    }
+
+    // Units belong to whoever has them in their commanding list. The followingPlayer flag is not reliable for
+    // this: vanilla OnUnitRemove skips resetting it when canCommandUnitsInThisMode is off, and a stale flag made
+    // placed units impossible to call again.
+    private static bool IsCommandedByAnyPlayer(PathfindMovementPlayerunit unit)
+    {
+        foreach (var player in Plugin.Instance.PlayerManager.GetAllPlayers())
+        {
+            var command = player.Object != null ? player.Object.GetComponent<CommandUnits>() : null;
+            if (command != null && command.PlayerUnitsCommanding.Contains(unit))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void HandleNotCommanding(CommandUnits self, List<PathfindMovementPlayerunit> commanding, PlayerNetworkData data)
@@ -186,8 +202,7 @@ public static class CommandUnitsPatch
                 }
                 
                 var unit = taggedObject.GetComponent<PathfindMovementPlayerunit>();
-                var followingPlayer = Traverse.Create(unit).Field<bool>("followingPlayer");
-                if (!followingPlayer.Value && !units.Value.Contains(unit))
+                if (unit != null && !IsCommandedByAnyPlayer(unit))
                 {
                     toAdd.Add(new IdentifierData(unit.GetComponent<Identifier>()));
                 }
@@ -366,6 +381,7 @@ public static class CommandUnitsPatch
     public static void PlaceUnit(CommandUnits self, PathfindMovementPlayerunit unit, Vector3 home)
     {
         self.OnUnitRemove(unit);
+        unit.FollowPlayer(false);
         foreach (var autoAttack in unit.GetComponents<AutoAttack>())
         {
             if (autoAttack.GetComponent<Hp>().HpValue > 0f)

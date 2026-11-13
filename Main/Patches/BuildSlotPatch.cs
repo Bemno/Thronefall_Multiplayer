@@ -93,7 +93,21 @@ public static class BuildSlotPatch
             identifier.SetIdentity(IdentifierType.BuildSlot, id);
         }
         {
-            var building = self.GetComponentInChildren<Hp>(true);
+            // The slot's own building Hp. The first Hp found under the slot can belong to a nested slot or a unit,
+            // which made HpSync apply another building's health (e.g. 0 from an unbuilt slot) to a new wall.
+            var first = self.GetComponentInChildren<Hp>(true);
+            var building = Traverse.Create(self).Field<Hp>("hpParent").Value ?? first;
+            if (building != first)
+            {
+                Plugin.Log.LogInfo($"[BuildDiag] slot {id} '{self.name}': hpParent '{building?.name}' differs from first Hp '{first?.name}'");
+            }
+
+            if (building != null && System.Array.Exists(building.GetComponents<Identifier>(), i => i.Type == IdentifierType.Building))
+            {
+                Plugin.Log.LogWarning($"[BuildDiag] slot {id} '{self.name}': Hp '{building.name}' already has an id, skipping");
+                building = null;
+            }
+
             if (building != null)
             {
                 var identifier = building.gameObject.AddComponent<Identifier>();

@@ -12,6 +12,18 @@ ThronefallMultiplayerContinued 1.2.2), stopped working with Thronefall v2.13. It
 This fork was developed with the help of Claude (Anthropic), an AI assistant, which wrote much of the code
 and documentation under human direction and in-game testing.
 
+## 1.3.3: fixes and updates from GitHub
+
+- The host's match save now reaches the other players again (broken in 1.3.0), so Retry Day and continuing a run
+  load the same buildings for everyone. Starting a level over now starts fresh for everyone.
+- The mod checks GitHub for a newer release when the game starts and can install it from the title screen
+  (turn off with `Update.CheckGitHub`).
+- The host window remembers name, password, player count and options.
+- Units can be called again after being placed; previously they could only be called once.
+- Building health is synced from each slot's own building, which should fix new walls looking partly destroyed.
+- The tutorial no longer shows its "dead" tip for living players online.
+- Leaving a level after a defeat no longer floods errors and stalls the After Match screen.
+
 ## 1.3.0: progress per group of players
 
 - Online, progress (perk level, XP, beaten levels, highscores) is kept per group of players. The first game with a

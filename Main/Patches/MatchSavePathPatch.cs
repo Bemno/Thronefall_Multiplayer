@@ -8,13 +8,21 @@ namespace ThronefallMP.Patches;
 [HarmonyPatch(typeof(MatchSaveLoadHandler), "get_SavePath")]
 public static class MatchSavePathPatch
 {
+    public static string FilePrefix
+    {
+        get
+        {
+            var key = Network.PartnerProgress.ActiveKey;
+            return key == null ? "mp_" : $"mp_{key}_";
+        }
+    }
+
     private static void Postfix(ref string __result)
     {
         var network = Plugin.Instance?.Network;
         if (network != null && network.Online)
         {
-            var key = Network.PartnerProgress.ActiveKey;
-            __result = (key == null ? "mp_" : $"mp_{key}_") + __result;
+            __result = FilePrefix + __result;
         }
     }
 }

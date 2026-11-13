@@ -154,7 +154,10 @@ public class LevelDataSync : BaseSync
             To = packet.To,
             From = packet.From
         };
-        SaveSync.SendSave(packet.To);
+        // The presser chose Continue or Start New in level select; the host must load the same way and
+        // must not hand clients the old save when starting over.
+        MatchSaveLoadHandler.OverwriteCurrentSave = packet.OverwriteSave;
+        SaveSync.SendSave(packet.To, packet.OverwriteSave);
         Equip.ClearEquipments();
         foreach (var perk in packet.Perks)
         {

@@ -18,6 +18,8 @@ public class UnitRespawnerForBuildingsPatch
             return 0;
         }
 
-        return original(self);
+        var result = original(self);
+        Plugin.Log.LogInfo($"[UnitDiag] respawn {self.name}: unit {result}");
+        return result;
     }
 }

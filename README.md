@@ -12,6 +12,15 @@ ThronefallMultiplayerContinued 1.2.2), stopped working with Thronefall v2.13. It
 This fork was developed with the help of Claude (Anthropic), an AI assistant, which wrote much of the code
 and documentation under human direction and in-game testing.
 
+## 1.3.0: progress per group of players
+
+- Online, progress (perk level, XP, beaten levels, highscores) is kept per group of players. The first game with a
+  friend starts from zero, and the next time you play together you keep what you unlocked together. Your singleplayer
+  save is never written while playing online and is loaded again when you return to the main menu.
+- Match saves are kept per group too, so a run with one friend does not continue with another.
+- The original save files are copied once to `*.sav.mp-backup`. Turn the feature off with
+  `Progress.SeparateProgressPerPartner` in the mod's config.
+
 ## 1.2.9: joining works again
 
 - Fixed joining hanging on "Connecting". The host ignored the join request when a Steam connection to that player

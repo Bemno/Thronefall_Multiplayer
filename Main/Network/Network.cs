@@ -11,6 +11,7 @@ using ThronefallMP.Network.Packets.Game;
 using ThronefallMP.Network.Packets.PlayerCommand;
 using ThronefallMP.Network.Packets.Sync;
 using ThronefallMP.Network.Sync;
+using ThronefallMP.Patches;
 using ThronefallMP.UI;
 using ThronefallMP.Utils;
 using UnityEngine;
@@ -225,6 +226,13 @@ public class Network : MonoBehaviour
         Plugin.Log.LogInfoFiltered("Network", $"Sending peer sync");
         Send(packet);
 
+        var others = _peers.Where(p => p != SteamUser.GetSteamID());
+        if (PartnerProgress.Use(others) && SceneTransitionManagerPatch.InLevelSelect)
+        {
+            // The overworld reads beaten levels when it loads, so reload it with the group's progress.
+            SceneTransitionManagerPatch.Transition(SceneTransitionManagerPatch.CurrentScene, SceneTransitionManagerPatch.CurrentScene);
+        }
+
         var unlocks = PacketHandler.BuildHostUnlocksPacket();
         if (unlocks.Unlocks.Count > 0)
         {
@@ -367,6 +375,7 @@ public class Network : MonoBehaviour
     public void Local()
     {
         CloseLobby();
+        PartnerProgress.Restore();
         
         Plugin.Log.LogInfoFiltered("Network", "Switched to Local");
         Server = true;

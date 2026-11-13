@@ -13,7 +13,8 @@ public static class MatchSavePathPatch
         var network = Plugin.Instance?.Network;
         if (network != null && network.Online)
         {
-            __result = "mp_" + __result;
+            var key = Network.PartnerProgress.ActiveKey;
+            __result = (key == null ? "mp_" : $"mp_{key}_") + __result;
         }
     }
 }

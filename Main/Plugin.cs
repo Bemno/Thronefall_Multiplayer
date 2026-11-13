@@ -48,6 +48,7 @@ namespace ThronefallMP
                 "Network", "EnableSimulation", false, "Enable simulation of a bad network for debugging");
             
             Instance = this;
+            ThronefallMP.Network.PartnerProgress.Bind(Config);
             TextureRepository = new TextureRepository();
             Network = Instance.gameObject.AddComponent<Network.Network>();
             Updater = Instance.gameObject.AddComponent<Network.ModUpdater>();

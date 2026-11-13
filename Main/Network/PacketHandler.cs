@@ -129,6 +129,8 @@ public static class PacketHandler
 
         if (AwaitingConnectionApproval)
         {
+            var self = SteamUser.GetSteamID();
+            PartnerProgress.Use(packet.Players.Select(p => p.SteamId).Where(id => id != self));
             // Currently we only allow joining a lobby if we are in level select.
             SceneTransitionManager.instance.TransitionFromNullToLevelSelect();
             UIManager.LobbyListPanel.CloseConnectingDialog();

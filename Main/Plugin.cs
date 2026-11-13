@@ -55,6 +55,7 @@ namespace ThronefallMP
             Partners = Instance.gameObject.AddComponent<Network.RecentPartners>();
             gameObject.AddComponent<Network.SaveSync>();
             gameObject.AddComponent<Network.GitHubUpdater>();
+            gameObject.AddComponent<Network.ProgressSync>();
             gameObject.AddComponent<Components.LoadoutWatcher>();
             PlayerManager = new Network.PlayerManager();
             CheatHandler = new CheatHandler();

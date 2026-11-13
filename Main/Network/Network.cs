@@ -233,6 +233,8 @@ public class Network : MonoBehaviour
             SceneTransitionManagerPatch.Transition(SceneTransitionManagerPatch.CurrentScene, SceneTransitionManagerPatch.CurrentScene);
         }
 
+        ProgressSync.Push();
+
         var unlocks = PacketHandler.BuildHostUnlocksPacket();
         if (unlocks.Unlocks.Count > 0)
         {

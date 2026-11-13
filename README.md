@@ -12,6 +12,12 @@ ThronefallMultiplayerContinued 1.2.2), stopped working with Thronefall v2.13. It
 This fork was developed with the help of Claude (Anthropic), an AI assistant, which wrote much of the code
 and documentation under human direction and in-game testing.
 
+## 1.3.7: shared progress stays in sync
+
+- Each player kept their own copy of a group's progress, and the copies drifted apart (different perk levels and
+  unlocks). When a player joins, the copy with the most progress now wins and is copied to the other; after that the
+  host sends its copy after every save. Copies are only swapped in level select.
+
 ## 1.3.6: walls, wins and unit commands
 
 - Walls built by a client are built and paid for as one group, like the host's own builds. Before, every wall piece was

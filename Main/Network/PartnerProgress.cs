@@ -90,6 +90,14 @@ public static class PartnerProgress
 
     // Mirrors SaveLoadManager.LoadGame without GameProgressResetter.AfterPlaytestReset, which deletes
     // Craaghelm match saves whenever the (here: profile) Craaghelm save file does not exist yet.
+    public static void Reload()
+    {
+        if (SaveLoadManager.instance != null)
+        {
+            Reload(SaveLoadManager.instance);
+        }
+    }
+
     private static void Reload(SaveLoadManager manager)
     {
         PerkManager.ResetAllProgress();

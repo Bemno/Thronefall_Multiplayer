@@ -12,6 +12,14 @@ ThronefallMultiplayerContinued 1.2.2), stopped working with Thronefall v2.13. It
 This fork was developed with the help of Claude (Anthropic), an AI assistant, which wrote much of the code
 and documentation under human direction and in-game testing.
 
+## 1.2.9: joining works again
+
+- Fixed joining hanging on "Connecting". The host ignored the join request when a Steam connection to that player
+  was already open (the recent-partners list opens one), and did not read any messages before the first player was
+  approved. A Steam session that failed once also refused all later messages; sessions now restart automatically.
+- The Multiplayer window shows a **Recent players** row: everyone you played with, with a **Join** button for those
+  currently hosting.
+
 ## Craaghelm DLC support (1.2.7, experimental)
 
 1.2.7 adds support for the Craaghelm DLC. It has only been tested in singleplayer so far; online play on

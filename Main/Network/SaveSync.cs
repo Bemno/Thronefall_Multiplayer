@@ -118,7 +118,7 @@ public class SaveSync : MonoBehaviour
         {
             SteamNetworkingMessages.SendMessageToUser(
                 ref identity, handle.AddrOfPinnedObject(), (uint)data.Length,
-                Constants.k_nSteamNetworkingSend_Reliable, Channel);
+                Constants.k_nSteamNetworkingSend_Reliable | Constants.k_nSteamNetworkingSend_AutoRestartBrokenSession, Channel);
         }
         finally
         {

@@ -288,7 +288,7 @@ public class Network : MonoBehaviour
                     Marshal.Copy(message.m_pData, buffer.Data, 0, buffer.Data.Length);
                     HandlePacket(ref message.m_identityPeer, buffer, PacketTypes);
                 }
-                else if (_pendingPeers.Contains(message.m_identityPeer.GetSteamID()))
+                else if (_pendingPeers.Contains(message.m_identityPeer.GetSteamID()) || AdmitLobbyMember(message.m_identityPeer.GetSteamID()))
                 {
                     var buffer = new Buffer(message.m_cbSize);
                     Marshal.Copy(message.m_pData, buffer.Data, 0, buffer.Data.Length);
@@ -313,7 +313,7 @@ public class Network : MonoBehaviour
     
     private void Update()
     {
-        if (_peers.Count > 0 || _pendingPeers.Count > 0)
+        if (_peers.Count > 0 || _pendingPeers.Count > 0 || (Online && Server))
         {
             foreach (var channel in Enum.GetValues(typeof(Channel)))
             {
@@ -528,7 +528,7 @@ public class Network : MonoBehaviour
             ref target,
             pointer,
             (uint)buffer.WriteHead,
-            flags,
+            flags | Constants.k_nSteamNetworkingSend_AutoRestartBrokenSession,
             (int)channel
         );
         handle.Free();
@@ -746,18 +746,7 @@ public class Network : MonoBehaviour
             return;
         }
 
-        var found = false;
-        for (int i = 0, count = SteamMatchmaking.GetNumLobbyMembers(Lobby); i < count; ++i)
-        {
-            var member = SteamMatchmaking.GetLobbyMemberByIndex(Lobby, i);
-            if (id == member)
-            {
-                found = true;
-                break;
-            }
-        }
-
-        if (!found)
+        if (!IsLobbyMember(id))
         {
             Plugin.Log.LogInfoFiltered("Network", $"Not in lobby");
             return;
@@ -766,6 +755,33 @@ public class Network : MonoBehaviour
         Plugin.Log.LogInfoFiltered("Network", $"Accepted {id.m_SteamID}");
         _pendingPeers.Add(id);
         SteamNetworkingMessages.AcceptSessionWithUser(ref request.m_identityRemote);
+    }
+
+    // The session may already be open (the partner list and updater talk to the same SteamID),
+    // in which case Steam never raises a session request and the joiner would be ignored.
+    private bool AdmitLobbyMember(CSteamID id)
+    {
+        if (!Online || !Server || !IsLobbyMember(id))
+        {
+            return false;
+        }
+
+        Plugin.Log.LogInfoFiltered("Network", $"Admitting lobby member {id.m_SteamID} on existing session");
+        _pendingPeers.Add(id);
+        return true;
+    }
+
+    private bool IsLobbyMember(CSteamID id)
+    {
+        for (int i = 0, count = SteamMatchmaking.GetNumLobbyMembers(Lobby); i < count; ++i)
+        {
+            if (SteamMatchmaking.GetLobbyMemberByIndex(Lobby, i) == id)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void OnLobbyChatUpdate(LobbyChatUpdate_t update)

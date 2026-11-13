@@ -120,6 +120,23 @@ public partial class LobbyListPanel
         image.color = UIManager.TextColor;
         UIHelper.SetLayoutElement(separator, minHeight: 2, flexibleHeight: 0);
         
+        _recentRow = UIHelper.CreateUIObject("recent", multiplayer);
+        UIHelper.SetLayoutGroup<HorizontalLayoutGroup>(
+            _recentRow,
+            false,
+            true,
+            true,
+            true,
+            10,
+            0,
+            0,
+            20,
+            20,
+            TextAnchor.MiddleLeft
+        );
+        UIHelper.SetLayoutElement(_recentRow, minHeight: 40, flexibleHeight: 0);
+        _recentRow.SetActive(false);
+
         var filters = UIHelper.CreateUIObject("filters", multiplayer);
         UIHelper.SetLayoutGroup<HorizontalLayoutGroup>(
             filters,

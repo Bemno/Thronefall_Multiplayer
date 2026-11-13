@@ -42,6 +42,9 @@ public class RecentPartners : MonoBehaviour
 
     public IEnumerable<CSteamID> KnownLobbies => _hostedLobbies.Values;
 
+    public IEnumerable<(string Name, CSteamID Lobby)> Recent => _partners.Select(p =>
+        (p.Name, _hostedLobbies.TryGetValue(p.Id, out var lobby) ? lobby : CSteamID.Nil));
+
     private void Start()
     {
         Load();
@@ -221,7 +224,7 @@ public class RecentPartners : MonoBehaviour
         {
             SteamNetworkingMessages.SendMessageToUser(
                 ref identity, handle.AddrOfPinnedObject(), (uint)data.Length,
-                Constants.k_nSteamNetworkingSend_Reliable, Channel);
+                Constants.k_nSteamNetworkingSend_Reliable | Constants.k_nSteamNetworkingSend_AutoRestartBrokenSession, Channel);
         }
         finally
         {

@@ -27,6 +27,8 @@ public partial class LobbyListPanel : BaseUI
     private ButtonControl _directConnect;
     private ButtonControl _back;
     private CustomScrollRect _scrollRect;
+    private GameObject _recentRow;
+    private string _recentSignature;
     private bool _muteSound;
 
     private List<LobbyItem> _lobbies = new();
@@ -148,6 +150,68 @@ public partial class LobbyListPanel : BaseUI
         Enabled = true;
         RefreshLobbies();
         Host.Button.Select();
+        _recentSignature = null;
+        RefreshRecent();
+    }
+
+    private void RefreshRecent()
+    {
+        var recent = new List<(string Name, CSteamID Lobby, bool Hosting)>();
+        foreach (var (name, lobby) in Plugin.Instance.Partners.Recent)
+        {
+            var hosting = lobby.IsValid() && !string.IsNullOrEmpty(SteamMatchmaking.GetLobbyData(lobby, "version"));
+            recent.Add((name, lobby, hosting));
+        }
+
+        var signature = string.Join("|", recent.ConvertAll(r => $"{r.Name}:{r.Hosting}:{r.Lobby.m_SteamID}"));
+        if (signature == _recentSignature)
+        {
+            return;
+        }
+
+        _recentSignature = signature;
+        foreach (Transform child in _recentRow.transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        _recentRow.SetActive(recent.Count > 0);
+        if (recent.Count == 0)
+        {
+            return;
+        }
+
+        var label = UIHelper.CreateText(_recentRow, "label", "Recent players:");
+        label.fontSize = 24;
+        UIHelper.SetLayoutElement(label.gameObject, minWidth: 200);
+        foreach (var (name, lobby, hosting) in recent)
+        {
+            var button = UIHelper.CreateButton(_recentRow, "recent", hosting ? $"Join {name}" : $"{name} (not hosting)");
+            button.Normal.Size = 24;
+            button.Hover.Size = 28;
+            button.NormalSelected.Size = 28;
+            button.HoverSelected.Size = 28;
+            button.Noninteractive.Size = 24;
+            button.Reset();
+            UIHelper.SetLayoutElement(button.gameObject, minWidth: 160, preferredWidth: 280);
+            button.SetInteractable(hosting);
+            if (!hosting)
+            {
+                continue;
+            }
+
+            button.OnClick += () =>
+            {
+                if (SteamMatchmaking.GetLobbyData(lobby, "password") == "yes")
+                {
+                    UIManager.CreatePasswordDialog(password => ConnectToLobby(lobby, name, password), () => {});
+                }
+                else
+                {
+                    ConnectToLobby(lobby, name, null);
+                }
+            };
+        }
     }
 
     public void Close()
@@ -189,6 +253,9 @@ public partial class LobbyListPanel : BaseUI
         {
             SteamMatchmaking.RequestLobbyData(lobby.LobbyInfo.Id);
         }
+
+        RequestPartnerLobbies();
+        RefreshRecent();
     }
 
     private void OnLobbiesRefreshed(LobbyMatchList_t list, bool ioFailure)

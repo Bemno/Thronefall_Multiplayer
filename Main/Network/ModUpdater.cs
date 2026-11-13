@@ -277,7 +277,7 @@ public class ModUpdater : MonoBehaviour
         {
             var result = SteamNetworkingMessages.SendMessageToUser(
                 ref identity, handle.AddrOfPinnedObject(), (uint)data.Length,
-                Constants.k_nSteamNetworkingSend_Reliable, channel);
+                Constants.k_nSteamNetworkingSend_Reliable | Constants.k_nSteamNetworkingSend_AutoRestartBrokenSession, channel);
             if (result != EResult.k_EResultOK)
             {
                 Plugin.Log.LogWarning($"Updater> send to {target.m_SteamID} returned {result}");

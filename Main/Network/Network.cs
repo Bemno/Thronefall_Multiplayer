@@ -264,7 +264,18 @@ public class Network : MonoBehaviour
     
     private void OnSessionFailed(SteamNetworkingMessagesSessionFailed_t failed)
     {
-        _peers.Remove(failed.m_info.m_identityRemote.GetSteamID());
+        var id = failed.m_info.m_identityRemote.GetSteamID();
+        _peers.Remove(id);
+        if (!Server && Online && id == Owner && Lobby.IsValid())
+        {
+            // The host dropped. Stay online so the lobby's owner change can hand hosting to someone who is left.
+            if (SteamMatchmaking.GetLobbyOwner(Lobby) != Owner)
+            {
+                MigrateServer();
+            }
+            return;
+        }
+
         if (!Server)
         {
             // TODO: Show an error
@@ -833,6 +844,23 @@ public class Network : MonoBehaviour
             // We are now the host.
             HandleMessage("Server", $"You are now hosting");
             Server = true;
+            PacketHandler.AwaitingConnectionApproval = false;
+            DlcOwnership.Publish(Lobby);
+            // Every dawn the old host sent its match save; keep it so the run continues from the last dawn.
+            SaveSync.AdoptHostSaves();
+            UIManager.CreateMessageDialog("You are now the host",
+                "The host left. Pick the level and press Continue to go on from the last dawn.\n" +
+                "The old host can join again from Recent players in the Multiplayer menu.");
+            if (!SceneTransitionManagerPatch.InLevelSelect)
+            {
+                // Mid-level state (enemies, units, pathing) only existed on the old host, and players can only
+                // join in level select.
+                SceneTransitionManager.instance.TransitionFromNullToLevelSelect();
+            }
+            else
+            {
+                SteamMatchmaking.SetLobbyJoinable(Lobby, true);
+            }
         }
         else
         {

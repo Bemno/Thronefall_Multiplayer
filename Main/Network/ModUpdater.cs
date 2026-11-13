@@ -216,9 +216,32 @@ public class ModUpdater : MonoBehaviour
 
         Plugin.Log.LogInfo($"Updater> installed {version}");
         UIManager.CreateMessageDialog("Updated",
-            $"Installed Multiplayer v{version}.\nRestart Thronefall to use it.",
-            "Quit game",
-            onClick: Application.Quit);
+            $"Installed Multiplayer v{version}.\nThe game restarts to use it.",
+            "Restart game",
+            onClick: Restart);
+    }
+
+    // Steam ignores a launch while the game is still running, so a hidden helper waits for this process to exit.
+    private static void Restart()
+    {
+        try
+        {
+            var pid = System.Diagnostics.Process.GetCurrentProcess().Id;
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = "-NoProfile -WindowStyle Hidden -Command " +
+                            $"\"Wait-Process -Id {pid} -ErrorAction SilentlyContinue; Start-Process 'steam://rungameid/2239150'\"",
+                CreateNoWindow = true,
+                UseShellExecute = false
+            });
+        }
+        catch (Exception e)
+        {
+            Plugin.Log.LogWarning($"Updater> could not schedule restart: {e.Message}");
+        }
+
+        Application.Quit();
     }
 
     private void Fail(string message)

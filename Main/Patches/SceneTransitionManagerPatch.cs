@@ -34,6 +34,12 @@ public static class SceneTransitionManagerPatch
         }
         else
         {
+            // Peers that did not press the button still show the After Match (Defeat/Victory) frame otherwise.
+            if (UIFrameManager.instance != null)
+            {
+                UIFrameManager.instance.CloseAllFrames();
+            }
+
             var gameplayScene = Traverse.Create(SceneTransitionManager.instance).Field<string>("comingFromGameplayScene");
             gameplayScene.Value = from;
             _transitionHookEnabled = false;

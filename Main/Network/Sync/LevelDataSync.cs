@@ -24,6 +24,7 @@ public class LevelDataSync : BaseSync
     private const float ResendWeaponRequestTime = 4f;
     
     private LevelRequest _activeRequest;
+    private static string _freshLevel;
     private WeaponDialog _activeDialog;
     
     protected override bool ShouldUpdate =>
@@ -32,7 +33,11 @@ public class LevelDataSync : BaseSync
     
     protected override BasePacket CreateSyncPacket(CSteamID peer)
     {
-        var packet = new SyncLevelDataPacket { Level = SceneTransitionManagerPatch.CurrentScene };
+        var packet = new SyncLevelDataPacket
+        {
+            Level = SceneTransitionManagerPatch.CurrentScene,
+            FreshStart = _freshLevel != null && _freshLevel == SceneTransitionManagerPatch.CurrentScene
+        };
         foreach (var player in Plugin.Instance.PlayerManager.GetAllPlayers())
         {
             packet.PlayerData.Add(new SyncLevelDataPacket.Player
@@ -61,7 +66,7 @@ public class LevelDataSync : BaseSync
     {
         var a = (SyncLevelDataPacket)current;
         var b = (SyncLevelDataPacket)last;
-        if (a.Perks.Count != b.Perks.Count || a.PlayerData.Count != b.PlayerData.Count)
+        if (a.FreshStart != b.FreshStart || a.Perks.Count != b.Perks.Count || a.PlayerData.Count != b.PlayerData.Count)
         {
             return false;
         }
@@ -157,6 +162,7 @@ public class LevelDataSync : BaseSync
         // The presser chose Continue or Start New in level select; the host must load the same way and
         // must not hand clients the old save when starting over.
         MatchSaveLoadHandler.OverwriteCurrentSave = packet.OverwriteSave;
+        _freshLevel = packet.OverwriteSave ? packet.To : null;
         SaveSync.SendSave(packet.To, packet.OverwriteSave);
         Equip.ClearEquipments();
         foreach (var perk in packet.Perks)
@@ -286,6 +292,13 @@ public class LevelDataSync : BaseSync
         
         if (packet.Level != SceneTransitionManagerPatch.CurrentScene)
         {
+            if (packet.FreshStart)
+            {
+                // Arrives with the transition itself; the separate save message can come too late, and the
+                // client then loaded its own stale copy of the old run.
+                MatchSaveLoadHandler.OverwriteCurrentSave = true;
+                SaveSync.ForgetHostSave(packet.Level);
+            }
             SceneTransitionManagerPatch.Transition(packet.Level, SceneTransitionManagerPatch.CurrentScene);
         }
     }

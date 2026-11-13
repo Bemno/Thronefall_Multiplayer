@@ -12,6 +12,16 @@ ThronefallMultiplayerContinued 1.2.2), stopped working with Thronefall v2.13. It
 This fork was developed with the help of Claude (Anthropic), an AI assistant, which wrote much of the code
 and documentation under human direction and in-game testing.
 
+## 1.3.5: gates, host migration and restarts
+
+- Gates in walls built by another player are now built for everyone. Before, the host could end up with a hole in
+  the wall, and enemies walked straight to the castle.
+- Starting a level over now starts fresh for everyone, also when the host presses New game.
+- The Defeat/Victory screen now closes for every player when the level changes.
+- If the host leaves, another player becomes host and lands in level select; Continue goes on from the last dawn,
+  and the old host can join again.
+- After an update the game restarts by itself.
+
 ## 1.3.3: fixes and updates from GitHub
 
 - The host's match save now reaches the other players again (broken in 1.3.0), so Retry Day and continuing a run

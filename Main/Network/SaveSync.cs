@@ -72,6 +72,36 @@ public class SaveSync : MonoBehaviour
         Plugin.Log.LogInfo($"SaveSync> sent {map} ({(json == null ? "no save" : $"{json.Length} chars")})");
     }
 
+    public static void ForgetHostSave(string map)
+    {
+        HostSaves[map] = null;
+        Plugin.Log.LogInfo($"SaveSync> fresh start of {map}, ignoring any match save");
+    }
+
+    // Called when this client becomes the host: the last match saves received from the old host become ours.
+    public static void AdoptHostSaves()
+    {
+        foreach (var save in HostSaves)
+        {
+            if (save.Value == null)
+            {
+                continue;
+            }
+
+            try
+            {
+                SaveServicesLocator.Instance.WriteAllText(FullPath(save.Key), save.Value);
+                Plugin.Log.LogInfo($"SaveSync> adopted host save for {save.Key}");
+            }
+            catch (Exception e)
+            {
+                Plugin.Log.LogWarning($"SaveSync> could not adopt save for {save.Key}: {e.Message}");
+            }
+        }
+
+        HostSaves.Clear();
+    }
+
     private void Update()
     {
         if (!SteamManager.Initialized || !IsClient)

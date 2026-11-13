@@ -14,6 +14,8 @@ public class SyncLevelDataPacket : BasePacket
     public const PacketId PacketID = PacketId.SyncLevelData;
 
     public string Level;
+    // The level is being started over: clients must start fresh instead of loading any match save.
+    public bool FreshStart;
     public List<Equipment> Perks = new();
     public List<Player> PlayerData = new();
     
@@ -23,6 +25,7 @@ public class SyncLevelDataPacket : BasePacket
     public override void Send(Buffer writer)
     {
         writer.Write(Level);
+        writer.Write(FreshStart);
         writer.Write((byte)Perks.Count);
         foreach (var perk in Perks)
         {
@@ -42,6 +45,7 @@ public class SyncLevelDataPacket : BasePacket
     {
         PlayerData.Clear();
         Level = reader.ReadString();
+        FreshStart = reader.ReadBoolean();
         
         var perks = reader.ReadByte();
         Perks.Clear();

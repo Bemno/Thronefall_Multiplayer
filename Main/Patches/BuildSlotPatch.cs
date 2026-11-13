@@ -235,6 +235,7 @@ public static class BuildSlotPatch
         building.OnUpgradeChoiceComplete(branch.choiceDetails);
         _disableNetworkHook = false;
         upgradeSelected.Value = null;
+        UpgradeDependents(building, id, choice);
 
         // DIAGNOSTIC (walls invisible to remote peers): report the post-build state so we can tell whether the
         // slot built logically on this peer (bpActive) but its combined wall mesh (MeshFusionPro via
@@ -273,6 +274,49 @@ public static class BuildSlotPatch
                 Traverse.Create(building.buildingInteractor).Method("BuildComplete").GetValue();
                 break;
             }
+        }
+    }
+
+    // Vanilla TryToBuildOrUpgradeAndPay also builds the slots its activator upgrades along with it (the gate in a
+    // wall). The network path only built the wall itself, so peers that did not build it had a hole where the gate
+    // should be and enemies walked straight to the castle.
+    private static void UpgradeDependents(BuildSlot building, ushort id, byte choice)
+    {
+        var level = Traverse.Create(building).Field<int>("level").Value;
+        var dependents = Traverse.Create(building).Field<List<BuildSlot>>("builtSlotsThatRelyOnThisBuilding").Value;
+        if (dependents == null)
+        {
+            return;
+        }
+
+        foreach (var dependent in dependents)
+        {
+            if (dependent == null || !dependent.ActivatorUpgradesThis || dependent.ActivatorBuilding != building)
+            {
+                continue;
+            }
+
+            var dependentLevel = Traverse.Create(dependent).Field<int>("level").Value;
+            if (dependentLevel >= level || dependentLevel >= dependent.upgrades.Count)
+            {
+                continue;
+            }
+
+            var upgrade = dependent.upgrades[dependentLevel];
+            if (upgrade.upgradeBranches.Count == 0)
+            {
+                continue;
+            }
+
+            var branch = upgrade.upgradeBranches[Mathf.Min(choice, upgrade.upgradeBranches.Count - 1)];
+            var selected = Traverse.Create(dependent).Field<BuildSlot.Upgrade>("upgradeSelected");
+            dependent.gameObject.SetActive(true);
+            selected.Value = upgrade;
+            _disableNetworkHook = true;
+            dependent.OnUpgradeChoiceComplete(branch.choiceDetails);
+            _disableNetworkHook = false;
+            selected.Value = null;
+            Plugin.Log.LogInfo($"[BuildDiag] slot {id}: also built dependent '{dependent.name}' to level {dependentLevel + 1}");
         }
     }
 

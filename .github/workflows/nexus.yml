@@ -21,15 +21,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.exe' --pattern '*.dll' --dir assets
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern 'com.badwolf.thronefall_mp.dll' --dir assets
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body -q .body > changelog.txt
 
+      # Only the plugin DLL: bundling BepInEx (winhttp.dll proxy) or the installer exe gets the file quarantined.
       - name: Build Nexus archive
         run: |
           VERSION="${TAG#v}"
           mkdir -p pkg/BepInEx/plugins/ThronefallMultiplayer
           cp assets/com.badwolf.thronefall_mp.dll pkg/BepInEx/plugins/ThronefallMultiplayer/
-          cp assets/Thronefall-Multiplayer-Installer.exe pkg/
           (cd pkg && zip -r "../Thronefall-Multiplayer-$VERSION.zip" .)
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           {

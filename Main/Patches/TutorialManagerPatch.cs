@@ -19,13 +19,19 @@ public static class TutorialManagerPatch
 
         var traverse = Traverse.Create(__instance);
         var player = traverse.Field<UnityEngine.Transform>("player");
-        if (player.Value == local.transform)
+        if (player.Value != local.transform)
         {
-            return;
+            player.Value = local.transform;
+            traverse.Field<Hp>("playerHp").Value = local.GetComponent<Hp>();
+            traverse.Field<RVOController>("playerRvo").Value = local.GetComponent<RVOController>();
+            traverse.Field<PlayerInteraction>("playerInteraction").Value = local.GetComponent<PlayerInteraction>();
         }
 
-        player.Value = local.transform;
-        traverse.Field<Hp>("playerHp").Value = local.GetComponent<Hp>();
-        traverse.Field<RVOController>("playerRvo").Value = local.GetComponent<RVOController>();
+        // The "melee 0/3" counter reads the scene player's serialized StabMA, which never attacks. The weapon is
+        // equipped after spawn, so keep following whatever StabMA the local player currently has.
+        if (local.GetComponent<PlayerInteraction>()?.ManualAttack is StabMA stab)
+        {
+            traverse.Field<StabMA>("activeStabAttack").Value = stab;
+        }
     }
 }

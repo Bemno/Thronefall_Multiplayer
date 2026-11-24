@@ -12,6 +12,12 @@ ThronefallMultiplayerContinued 1.2.2), stopped working with Thronefall v2.13. It
 This fork was developed with the help of Claude (Anthropic), an AI assistant, which wrote much of the code
 and documentation under human direction and in-game testing.
 
+## 1.3.8: tutorial melee counter
+
+- The tutorial's "melee 0/3" step never counted hits in multiplayer: it watched the level's original player, which
+  the mod replaces with networked players. It now follows the local player's melee attack, so the tutorial can be
+  completed online. The host's hits are the ones that end the tutorial wave.
+
 ## 1.3.7: shared progress stays in sync
 
 - Each player kept their own copy of a group's progress, and the copies drifted apart (different perk levels and

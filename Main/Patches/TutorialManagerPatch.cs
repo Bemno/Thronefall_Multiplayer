@@ -25,6 +25,7 @@ public static class TutorialManagerPatch
             traverse.Field<Hp>("playerHp").Value = local.GetComponent<Hp>();
             traverse.Field<RVOController>("playerRvo").Value = local.GetComponent<RVOController>();
             traverse.Field<PlayerInteraction>("playerInteraction").Value = local.GetComponent<PlayerInteraction>();
+            traverse.Field<CommandUnits>("command").Value = local.GetComponent<CommandUnits>();
         }
 
         // The "melee 0/3" counter reads the scene player's serialized StabMA, which never attacks. The weapon is

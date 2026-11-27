@@ -12,6 +12,12 @@ ThronefallMultiplayerContinued 1.2.2), stopped working with Thronefall v2.13. It
 This fork was developed with the help of Claude (Anthropic), an AI assistant, which wrote much of the code
 and documentation under human direction and in-game testing.
 
+## 1.3.9: tutorial unit command step
+
+- The tutorial's "build barracks, hold R and move to select your units" step never advanced in multiplayer: like
+  the melee counter it watched the level's original player instead of the networked one. It now follows the local
+  player's unit command, so the host can complete it.
+
 ## 1.3.8: tutorial melee counter
 
 - The tutorial's "melee 0/3" step never counted hits in multiplayer: it watched the level's original player, which
